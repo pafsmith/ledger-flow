@@ -1,5 +1,5 @@
-package dev.pafsmith.ledgerflow.service;
-import dev.pafsmith.ledgerflow.dto.HealthResponse;
+package dev.pafsmith.ledgerflow.health.service;
+import dev.pafsmith.ledgerflow.health.dto.HealthResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import java.time.Instant;

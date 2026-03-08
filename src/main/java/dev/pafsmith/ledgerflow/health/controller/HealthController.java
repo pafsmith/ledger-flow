@@ -1,7 +1,7 @@
-package dev.pafsmith.ledgerflow.controller;
+package dev.pafsmith.ledgerflow.health.controller;
 
-import dev.pafsmith.ledgerflow.dto.HealthResponse;
-import dev.pafsmith.ledgerflow.service.HealthService;
+import dev.pafsmith.ledgerflow.health.dto.HealthResponse;
+import dev.pafsmith.ledgerflow.health.service.HealthService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

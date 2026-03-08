@@ -1,4 +1,4 @@
-package dev.pafsmith.ledgerflow.dto;
+package dev.pafsmith.ledgerflow.health.dto;
 
 import java.time.Instant;
 
