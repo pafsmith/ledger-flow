@@ -1,6 +1,7 @@
 package dev.pafsmith.ledgerflow.user.entity;
 
 import dev.pafsmith.ledgerflow.account.entity.Account;
+import dev.pafsmith.ledgerflow.category.entity.Category;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -34,6 +35,10 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<Account> accounts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<Category> categories = new ArrayList<>();
+
     public User() {
     }
 
