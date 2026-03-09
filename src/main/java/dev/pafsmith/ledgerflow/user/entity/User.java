@@ -1,7 +1,10 @@
 package dev.pafsmith.ledgerflow.user.entity;
 
+import dev.pafsmith.ledgerflow.account.entity.Account;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -28,6 +31,11 @@ public class User {
 
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<Account> accounts = new ArrayList<>();
+    public User() {
+    }
 
     public UUID getId() {
         return id;
