@@ -1,96 +1,102 @@
 package dev.pafsmith.ledgerflow.category.entity;
 
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
+import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "categories")
 public class Category {
-    @Id
-    @GeneratedValue
-    private UUID id;
+  @Id
+  @GeneratedValue
+  private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name="user_id", nullable = false)
-    private User user;
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+  @Column(nullable = false, length = 100)
+  private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private CategoryType type;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 50)
+  private CategoryType type;
 
-    @Column(name = "system_defined", nullable = false)
-    private boolean systemDefined = false;
+  @Column(name = "system_defined", nullable = false)
+  private boolean systemDefined = false;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
+  @Column(name = "created_at")
+  private Instant createdAt;
 
-    @Column(name = "updated_at")
-    private Instant updatedAt;
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 
-    public Category() {
+  @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = false)
+  private List<Transaction> transactions = new ArrayList<>();
 
-    }
+  public Category() {
 
-    public UUID getId() {
-        return id;
-    }
+  }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+  public UUID getId() {
+    return id;
+  }
 
-    public User getUser() {
-        return user;
-    }
+  public void setId(UUID id) {
+    this.id = id;
+  }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+  public User getUser() {
+    return user;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public void setUser(User user) {
+    this.user = user;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public CategoryType getType() {
-        return type;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public void setType(CategoryType type) {
-        this.type = type;
-    }
+  public CategoryType getType() {
+    return type;
+  }
 
-    public boolean isSystemDefined() {
-        return systemDefined;
-    }
+  public void setType(CategoryType type) {
+    this.type = type;
+  }
 
-    public void setSystemDefined(boolean systemDefined) {
-        this.systemDefined = systemDefined;
-    }
+  public boolean isSystemDefined() {
+    return systemDefined;
+  }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+  public void setSystemDefined(boolean systemDefined) {
+    this.systemDefined = systemDefined;
+  }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
 
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
+  public void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
 
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+  public Instant getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Instant updatedAt) {
+    this.updatedAt = updatedAt;
+  }
 }
