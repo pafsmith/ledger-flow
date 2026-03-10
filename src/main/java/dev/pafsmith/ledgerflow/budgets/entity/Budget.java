@@ -1,9 +1,10 @@
 package dev.pafsmith.ledgerflow.budgets.entity;
 
 import java.math.BigDecimal;
-import java.util.Locale.Category;
 
+import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.common.model.BaseEntity;
+import dev.pafsmith.ledgerflow.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,6 +19,9 @@ import jakarta.persistence.UniqueConstraint;
         "month" })
 })
 public class Budget extends BaseEntity {
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "category_id", nullable = false)
@@ -33,6 +37,14 @@ public class Budget extends BaseEntity {
   private Integer month;
 
   public Budget() {
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User user) {
+    this.user = user;
   }
 
   public Category getCategory() {
