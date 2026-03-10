@@ -1,0 +1,22 @@
+package dev.pafsmith.ledgerflow.budgets.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import dev.pafsmith.ledgerflow.budgets.entity.Budget;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface BudgetRepository extends JpaRepository<Budget, UUID> {
+
+  List<Budget> findByUserId(UUID userId);
+
+  List<Budget> findByUserIdAndYearAndMonth(UUID userId, Integer year, Integer month);
+
+  Optional<Budget> findByUserIdAndCategoryIdAndYearAndMonth(
+      UUID userId,
+      UUID categoryId,
+      Integer year,
+      Integer month);
+}
