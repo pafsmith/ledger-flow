@@ -172,6 +172,12 @@ public class TransactionService {
     return response;
   }
 
+  public TransactionResponse getTransactionById(UUID transactionId) {
+    Transaction transaction = transactionRepository.findById(transactionId)
+        .orElseThrow(() -> new RuntimeException("Transaction not found"));
+    return mapToResponse(transaction);
+  }
+
   public List<Transaction> getTransactionsForUser(UUID userId) {
     return transactionRepository.findByUserId(userId);
   }
