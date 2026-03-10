@@ -1,5 +1,6 @@
 package dev.pafsmith.ledgerflow.category.entity;
 
+import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.common.model.BaseEntity;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
@@ -31,6 +32,9 @@ public class Category extends BaseEntity {
 
   @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = false)
   private List<Transaction> transactions = new ArrayList<>();
+
+  @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = false)
+  private List<Budget> budgets = new ArrayList<>();
 
   public Category() {
 

@@ -1,10 +1,7 @@
 package dev.pafsmith.ledgerflow.transaction.entity;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
-
 import dev.pafsmith.ledgerflow.account.entity.Account;
 import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.common.model.BaseEntity;
@@ -16,8 +13,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;

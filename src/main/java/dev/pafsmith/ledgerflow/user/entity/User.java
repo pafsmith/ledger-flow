@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dev.pafsmith.ledgerflow.account.entity.Account;
+import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.common.model.BaseEntity;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
@@ -37,6 +38,9 @@ public class User extends BaseEntity {
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = false)
   private List<Transaction> transactions = new ArrayList<>();
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = false)
+  private List<Budget> budgets = new ArrayList<>();
 
   public User() {
   }
