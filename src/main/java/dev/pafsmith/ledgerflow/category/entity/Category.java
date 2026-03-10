@@ -1,16 +1,23 @@
 package dev.pafsmith.ledgerflow.category.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.common.model.BaseEntity;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
 import dev.pafsmith.ledgerflow.user.entity.User;
-import jakarta.persistence.*;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "categories")

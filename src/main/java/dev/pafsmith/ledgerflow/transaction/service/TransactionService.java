@@ -6,17 +6,170 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import dev.pafsmith.ledgerflow.account.entity.Account;
+import dev.pafsmith.ledgerflow.account.repository.AccountRepository;
+import dev.pafsmith.ledgerflow.category.entity.Category;
+import dev.pafsmith.ledgerflow.category.enums.CategoryType;
+import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
+import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
+import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.repository.TransactionRepository;
+import dev.pafsmith.ledgerflow.user.entity.User;
+import dev.pafsmith.ledgerflow.user.repository.UserRepository;
 
 @Service
 public class TransactionService {
 
   private final TransactionRepository transactionRepository;
+  private final UserRepository userRepository;
+  private final AccountRepository accountRepository;
+  private final CategoryRepository categoryRepository;
 
-  public TransactionService(TransactionRepository transactionRepository) {
+  public TransactionService(
+      TransactionRepository transactionRepository,
+      UserRepository userRepository,
+      AccountRepository accountRepository,
+      CategoryRepository categoryRepository) {
+
     this.transactionRepository = transactionRepository;
+    this.userRepository = userRepository;
+    this.accountRepository = accountRepository;
+    this.categoryRepository = categoryRepository;
+  }
+
+  public TransactionResponse createTransaction(CreateTransactionRequest request) {
+    User user = userRepository.findById(request.getUserId())
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+    Account account = accountRepository.findById(request.getAccountId())
+        .orElseThrow(() -> new RuntimeException("Account not found"));
+
+    if (!account.getUser().getId().equals(user.getId())) {
+      throw new RuntimeException("Account does not belong to user");
+    }
+
+    Category category = null;
+    if (request.getCategoryId() != null) {
+      category = categoryRepository.findById(request.getCategoryId())
+          .orElseThrow(() -> new RuntimeException("Category not found"));
+
+      if (!category.getUser().getId().equals(user.getId())) {
+        throw new RuntimeException("Category does not belong to user");
+      }
+    }
+
+    Account destinationAccount = null;
+    if (request.getDestinationAccountId() != null) {
+      destinationAccount = accountRepository.findById(request.getDestinationAccountId())
+          .orElseThrow(() -> new RuntimeException("Destination account ot found"));
+
+      if (!destinationAccount.getUser().getId().equals(user.getId())) {
+        throw new RuntimeException("Destination account does not belong to user");
+      }
+    }
+
+    validateTransactionRules(request, category, destinationAccount, account);
+
+    Transaction transaction = new Transaction();
+    transaction.setUser(user);
+    transaction.setAccount(account);
+    transaction.setCategory(category);
+    transaction.setDestinationAccount(destinationAccount);
+    transaction.setDescription(request.getDescription());
+    transaction.setAmount(request.getAmount());
+    transaction.setType(request.getType());
+    transaction.setTransactionDate(request.getTransactionDate());
+    transaction.setMerchant(request.getMerchant());
+    transaction.setNotes(request.getNotes());
+
+    Transaction savedTransaction = transactionRepository.save(transaction);
+
+    return mapToResponse(savedTransaction);
+  }
+
+  private void validateTransactionRules(
+      CreateTransactionRequest request,
+      Category category,
+      Account destinationAccount,
+      Account sourceAccount) {
+    if (request.getAmount() == null || request.getAmount().signum() <= 0) {
+      throw new RuntimeException("Amount must be greater than zero");
+    }
+    if (request.getDescription() == null || request.getDescription().isBlank()) {
+      throw new RuntimeException("Description is required");
+    }
+
+    if (request.getTransactionDate() == null) {
+      throw new RuntimeException("Transaction date is required");
+    }
+
+    if (request.getType() == null) {
+      throw new RuntimeException("Transaction type is required");
+    }
+
+    if (request.getType() == TransactionType.TRANSFER) {
+      if (destinationAccount == null) {
+        throw new RuntimeException("Destination account is required for transfers");
+      }
+
+      if (sourceAccount.getId().equals(destinationAccount.getId())) {
+        throw new RuntimeException("Source and destination accounts cannot be the same");
+      }
+
+      if (category != null) {
+        throw new RuntimeException("Transfers should not have a category");
+      }
+    }
+
+    if (request.getType() == TransactionType.EXPENSE) {
+      if (destinationAccount != null) {
+        throw new RuntimeException("Expenses cannot have a destination account");
+      }
+
+      if (category == null) {
+        throw new RuntimeException("Expense transactions require a category");
+      }
+
+      if (category.getType() != CategoryType.EXPENSE) {
+        throw new RuntimeException("Expense transactions must use an expense category");
+      }
+    }
+
+    if (request.getType() == TransactionType.INCOME) {
+      if (destinationAccount != null) {
+        throw new RuntimeException("Income transactions cannot have a destination account");
+      }
+
+      if (category == null) {
+        throw new RuntimeException("Income transactions require a category");
+      }
+
+      if (category.getType() != CategoryType.INCOME) {
+        throw new RuntimeException("Income transactions must use an income category");
+      }
+    }
+  }
+
+  private TransactionResponse mapToResponse(Transaction transaction) {
+    TransactionResponse response = new TransactionResponse();
+    response.setId(transaction.getId());
+    response.setUserId(transaction.getUser().getId());
+    response.setAccountId(transaction.getAccount().getId());
+    response.setCategoryId(
+        transaction.getCategory() != null ? transaction.getCategory().getId() : null);
+    response.setDestinationAccountId(
+        transaction.getDestinationAccount() != null ? transaction.getDestinationAccount().getId() : null);
+    response.setDescription(transaction.getDescription());
+    response.setAmount(transaction.getAmount());
+    response.setType(transaction.getType());
+    response.setTransactionDate(transaction.getTransactionDate());
+    response.setMerchant(transaction.getMerchant());
+    response.setNotes(transaction.getNotes());
+    response.setCreatedAt(transaction.getCreatedAt());
+    response.setUpdatedAt(transaction.getUpdatedAt());
+    return response;
   }
 
   public List<Transaction> getTransactionsForUser(UUID userId) {
