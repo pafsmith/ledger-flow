@@ -1,23 +1,27 @@
 package dev.pafsmith.ledgerflow.account.entity;
 
-import dev.pafsmith.ledgerflow.account.enums.AccountType;
-import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
-import dev.pafsmith.ledgerflow.user.entity.User;
-import jakarta.persistence.*;
-
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
+import dev.pafsmith.ledgerflow.account.enums.AccountType;
+import dev.pafsmith.ledgerflow.common.model.BaseEntity;
+import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
+import dev.pafsmith.ledgerflow.user.entity.User;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "accounts")
-public class Account {
-
-  @Id
-  @GeneratedValue
-  private UUID id;
+public class Account extends BaseEntity {
 
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
@@ -39,33 +43,11 @@ public class Account {
   @Column(nullable = false)
   private boolean active = false;
 
-  @Column(name = "created_at")
-  private Instant createdAt;
-
-  @Column(name = "updated_at")
-  private Instant updatedAt;
-
   @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = false)
   private List<Transaction> transactions = new ArrayList<>();
 
   public Account() {
 
-  }
-
-  public Instant getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Instant updatedAt) {
-    this.updatedAt = updatedAt;
-  }
-
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Instant createdAt) {
-    this.createdAt = createdAt;
   }
 
   public boolean isActive() {
@@ -116,11 +98,4 @@ public class Account {
     this.user = user;
   }
 
-  public UUID getId() {
-    return id;
-  }
-
-  public void setId(UUID id) {
-    this.id = id;
-  }
 }

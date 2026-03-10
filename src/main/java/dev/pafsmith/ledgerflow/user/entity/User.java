@@ -1,20 +1,21 @@
 package dev.pafsmith.ledgerflow.user.entity;
 
-import dev.pafsmith.ledgerflow.account.entity.Account;
-import dev.pafsmith.ledgerflow.category.entity.Category;
-import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
-import jakarta.persistence.*;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
+import dev.pafsmith.ledgerflow.account.entity.Account;
+import dev.pafsmith.ledgerflow.category.entity.Category;
+import dev.pafsmith.ledgerflow.common.model.BaseEntity;
+import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
-public class User {
-  @Id
-  @GeneratedValue
-  private UUID id;
+public class User extends BaseEntity {
 
   @Column(nullable = false)
   private String firstName;
@@ -28,12 +29,6 @@ public class User {
   @Column(nullable = false)
   private String passwordHash;
 
-  @Column(nullable = false)
-  private Instant createdAt;
-
-  @Column(nullable = false)
-  private Instant updatedAt;
-
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = false)
   private List<Account> accounts = new ArrayList<>();
 
@@ -44,14 +39,6 @@ public class User {
   private List<Transaction> transactions = new ArrayList<>();
 
   public User() {
-  }
-
-  public UUID getId() {
-    return id;
-  }
-
-  public void setId(UUID id) {
-    this.id = id;
   }
 
   public String getFirstName() {
@@ -86,19 +73,4 @@ public class User {
     this.passwordHash = passwordHash;
   }
 
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Instant createdAt) {
-    this.createdAt = createdAt;
-  }
-
-  public Instant getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Instant updatedAt) {
-    this.updatedAt = updatedAt;
-  }
 }
