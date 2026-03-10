@@ -1,5 +1,6 @@
 package dev.pafsmith.ledgerflow.transaction.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -34,5 +35,10 @@ public class TransactionController {
   @GetMapping("/{transactionId}")
   public TransactionResponse getTransactionById(@PathVariable UUID transactionId) {
     return transactionService.getTransactionById(transactionId);
+  }
+
+  @GetMapping("/user/{userId}")
+  public List<TransactionResponse> getTransactionsForUser(@PathVariable UUID userId) {
+    return transactionService.getTransactionsForUser(userId);
   }
 }

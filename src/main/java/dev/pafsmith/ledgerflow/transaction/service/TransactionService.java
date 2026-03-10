@@ -178,8 +178,11 @@ public class TransactionService {
     return mapToResponse(transaction);
   }
 
-  public List<Transaction> getTransactionsForUser(UUID userId) {
-    return transactionRepository.findByUserId(userId);
+  public List<TransactionResponse> getTransactionsForUser(UUID userId) {
+    return transactionRepository.findByUserId(userId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   public List<Transaction> getTransactionsForAccount(UUID accountId) {
