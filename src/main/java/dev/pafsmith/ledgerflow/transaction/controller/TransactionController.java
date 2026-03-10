@@ -41,4 +41,9 @@ public class TransactionController {
   public List<TransactionResponse> getTransactionsForUser(@PathVariable UUID userId) {
     return transactionService.getTransactionsForUser(userId);
   }
+
+  @GetMapping("/account/{accountId}")
+  public List<TransactionResponse> getTransactionsForAccount(@PathVariable UUID accountId) {
+    return transactionService.getTransactionsForAccount(accountId);
+  }
 }

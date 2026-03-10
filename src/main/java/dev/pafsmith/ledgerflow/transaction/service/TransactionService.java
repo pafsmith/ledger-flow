@@ -185,8 +185,11 @@ public class TransactionService {
         .toList();
   }
 
-  public List<Transaction> getTransactionsForAccount(UUID accountId) {
-    return transactionRepository.findByAccountId(accountId);
+  public List<TransactionResponse> getTransactionsForAccount(UUID accountId) {
+    return transactionRepository.findByAccountId(accountId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   public List<Transaction> getTransactionsForCategory(UUID categoryId) {
