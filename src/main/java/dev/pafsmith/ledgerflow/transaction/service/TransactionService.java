@@ -192,8 +192,11 @@ public class TransactionService {
         .toList();
   }
 
-  public List<Transaction> getTransactionsForCategory(UUID categoryId) {
-    return transactionRepository.findByCategoryId(categoryId);
+  public List<TransactionResponse> getTransactionsForCategory(UUID categoryId) {
+    return transactionRepository.findByCategoryId(categoryId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   public List<Transaction> getTransactionsForUserByType(UUID userId, TransactionType type) {
