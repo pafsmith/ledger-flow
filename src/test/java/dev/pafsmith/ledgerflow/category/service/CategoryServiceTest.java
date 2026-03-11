@@ -9,11 +9,13 @@ import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -106,5 +108,21 @@ class CategoryServiceTest {
         .hasMessage("Category with that name already exists for this user");
 
     verify(categoryRepository, never()).save(any(Category.class));
+  }
+
+  @Test
+  @DisplayName("GET /api/categories/{categoryId} returns 404 when category is not found")
+  void getCategoryById_shouldReturnNotFound_whenCategoryDoesNotExist() throws Exception {
+    UUID categoryId = UUID.randomUUID();
+
+    when(categoryService.getCategoryById(categoryId))
+        .thenThrow(new ResourceNotFoundException("Category not found"));
+
+    MockMvc.perform(get("/api/categories/{categoryId}", categoryId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.status").value(404))
+        .andExpect(jsonPath("$.error").value("Not Found"))
+        .andExpect(jsonPath("$.message").value("Category not found"))
+        .andExpect(jsonPath("$.path").value("/api/categories/" + categoryId));
   }
 }
