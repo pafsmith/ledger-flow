@@ -220,4 +220,10 @@ public class TransactionService {
         .toList();
   }
 
+  public void deleteTransaction(UUID transactionId) {
+    Transaction transaction = transactionRepository.findById(transactionId)
+        .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+    transactionRepository.delete(transaction);
+  }
 }
