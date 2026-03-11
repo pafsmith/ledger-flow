@@ -206,11 +206,14 @@ public class TransactionService {
         .toList();
   }
 
-  public List<Transaction> getTransactionsForUserBetweenDates(
+  public List<TransactionResponse> getTransactionsForUserBetweenDates(
       UUID userId,
       LocalDate startDate,
       LocalDate endDate) {
-    return transactionRepository.findByUserIdAndTransactionDateBetween(userId, startDate, endDate);
+    return transactionRepository.findByUserIdAndTransactionDateBetween(userId, startDate, endDate)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
 }
