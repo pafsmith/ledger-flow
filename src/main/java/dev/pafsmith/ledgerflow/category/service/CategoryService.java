@@ -44,12 +44,25 @@ public class CategoryService {
     return mapToResponse(savedCategory);
   }
 
-  public List<Category> getCategoriesForUser(UUID userId) {
-    return categoryRepository.findByUserId(userId);
+  public CategoryResponse getCategoryById(UUID categoryId) {
+    Category category = categoryRepository.findById(categoryId)
+        .orElseThrow(() -> new ResourceNotFoundException("Category Not found"));
+
+    return mapToResponse(category);
   }
 
-  public List<Category> getCategoriesForUserByType(UUID userId, CategoryType type) {
-    return categoryRepository.findByUserIdAndType(userId, type);
+  public List<CategoryResponse> getCategoriesForUser(UUID userId) {
+    return categoryRepository.findByUserId(userId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
+  }
+
+  public List<CategoryResponse> getCategoriesForUserByType(UUID userId, CategoryType type) {
+    return categoryRepository.findByUserIdAndType(userId, type)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   private CategoryResponse mapToResponse(Category category) {
