@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
+import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.service.TransactionService;
 
 @RestController
@@ -50,5 +51,12 @@ public class TransactionController {
   @GetMapping("/category/{categoryId}")
   public List<TransactionResponse> getTransactionsForCategory(@PathVariable UUID categoryId) {
     return transactionService.getTransactionsForCategory(categoryId);
+  }
+
+  @GetMapping("/user/{userId}/type/{type}")
+  public List<TransactionResponse> getTransactionsForUserByType(
+      @PathVariable UUID userId,
+      @PathVariable TransactionType type) {
+    return transactionService.getTransactionsForUserByType(userId, type);
   }
 }

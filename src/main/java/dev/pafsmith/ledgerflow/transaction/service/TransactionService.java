@@ -199,8 +199,11 @@ public class TransactionService {
         .toList();
   }
 
-  public List<Transaction> getTransactionsForUserByType(UUID userId, TransactionType type) {
-    return transactionRepository.findByUserIdAndType(userId, type);
+  public List<TransactionResponse> getTransactionsForUserByType(UUID userId, TransactionType type) {
+    return transactionRepository.findByUserIdAndType(userId, type)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   public List<Transaction> getTransactionsForUserBetweenDates(
