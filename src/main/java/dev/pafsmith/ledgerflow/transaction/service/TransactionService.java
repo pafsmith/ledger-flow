@@ -11,6 +11,9 @@ import dev.pafsmith.ledgerflow.account.repository.AccountRepository;
 import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
+import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
+import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
+import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
@@ -41,32 +44,32 @@ public class TransactionService {
 
   public TransactionResponse createTransaction(CreateTransactionRequest request) {
     User user = userRepository.findById(request.getUserId())
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     Account account = accountRepository.findById(request.getAccountId())
-        .orElseThrow(() -> new RuntimeException("Account not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
     if (!account.getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Account does not belong to user");
+      throw new ForbiddenException("Account does not belong to user");
     }
 
     Category category = null;
     if (request.getCategoryId() != null) {
       category = categoryRepository.findById(request.getCategoryId())
-          .orElseThrow(() -> new RuntimeException("Category not found"));
+          .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
       if (!category.getUser().getId().equals(user.getId())) {
-        throw new RuntimeException("Category does not belong to user");
+        throw new ForbiddenException("Category does not belong to user");
       }
     }
 
     Account destinationAccount = null;
     if (request.getDestinationAccountId() != null) {
       destinationAccount = accountRepository.findById(request.getDestinationAccountId())
-          .orElseThrow(() -> new RuntimeException("Destination account ot found"));
+          .orElseThrow(() -> new ResourceNotFoundException("Destination account not found"));
 
       if (!destinationAccount.getUser().getId().equals(user.getId())) {
-        throw new RuntimeException("Destination account does not belong to user");
+        throw new ForbiddenException("Destination account does not belong to user");
       }
     }
 
@@ -95,59 +98,59 @@ public class TransactionService {
       Account destinationAccount,
       Account sourceAccount) {
     if (request.getAmount() == null || request.getAmount().signum() <= 0) {
-      throw new RuntimeException("Amount must be greater than zero");
+      throw new BadRequestException("Amount must be greater than zero");
     }
     if (request.getDescription() == null || request.getDescription().isBlank()) {
-      throw new RuntimeException("Description is required");
+      throw new BadRequestException("Description is required");
     }
 
     if (request.getTransactionDate() == null) {
-      throw new RuntimeException("Transaction date is required");
+      throw new BadRequestException("Transaction date is required");
     }
 
     if (request.getType() == null) {
-      throw new RuntimeException("Transaction type is required");
+      throw new BadRequestException("Transaction type is required");
     }
 
     if (request.getType() == TransactionType.TRANSFER) {
       if (destinationAccount == null) {
-        throw new RuntimeException("Destination account is required for transfers");
+        throw new BadRequestException("Destination account is required for transfers");
       }
 
       if (sourceAccount.getId().equals(destinationAccount.getId())) {
-        throw new RuntimeException("Source and destination accounts cannot be the same");
+        throw new BadRequestException("Source and destination accounts cannot be the same");
       }
 
       if (category != null) {
-        throw new RuntimeException("Transfers should not have a category");
+        throw new BadRequestException("Transfers should not have a category");
       }
     }
 
     if (request.getType() == TransactionType.EXPENSE) {
       if (destinationAccount != null) {
-        throw new RuntimeException("Expenses cannot have a destination account");
+        throw new BadRequestException("Expenses cannot have a destination account");
       }
 
       if (category == null) {
-        throw new RuntimeException("Expense transactions require a category");
+        throw new BadRequestException("Expense transactions require a category");
       }
 
       if (category.getType() != CategoryType.EXPENSE) {
-        throw new RuntimeException("Expense transactions must use an expense category");
+        throw new BadRequestException("Expense transactions must use an expense category");
       }
     }
 
     if (request.getType() == TransactionType.INCOME) {
       if (destinationAccount != null) {
-        throw new RuntimeException("Income transactions cannot have a destination account");
+        throw new BadRequestException("Income transactions cannot have a destination account");
       }
 
       if (category == null) {
-        throw new RuntimeException("Income transactions require a category");
+        throw new BadRequestException("Income transactions require a category");
       }
 
       if (category.getType() != CategoryType.INCOME) {
-        throw new RuntimeException("Income transactions must use an income category");
+        throw new BadRequestException("Income transactions must use an income category");
       }
     }
   }
@@ -174,7 +177,7 @@ public class TransactionService {
 
   public TransactionResponse getTransactionById(UUID transactionId) {
     Transaction transaction = transactionRepository.findById(transactionId)
-        .orElseThrow(() -> new RuntimeException("Transaction not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
     return mapToResponse(transaction);
   }
 
