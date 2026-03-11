@@ -172,27 +172,49 @@ public class TransactionService {
     return response;
   }
 
-  public List<Transaction> getTransactionsForUser(UUID userId) {
-    return transactionRepository.findByUserId(userId);
+  public TransactionResponse getTransactionById(UUID transactionId) {
+    Transaction transaction = transactionRepository.findById(transactionId)
+        .orElseThrow(() -> new RuntimeException("Transaction not found"));
+    return mapToResponse(transaction);
   }
 
-  public List<Transaction> getTransactionsForAccount(UUID accountId) {
-    return transactionRepository.findByAccountId(accountId);
+  public List<TransactionResponse> getTransactionsForUser(UUID userId) {
+    return transactionRepository.findByUserIdOrderByTransactionDateDesc(userId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
-  public List<Transaction> getTransactionsForCategory(UUID categoryId) {
-    return transactionRepository.findByCategoryId(categoryId);
+  public List<TransactionResponse> getTransactionsForAccount(UUID accountId) {
+    return transactionRepository.findByAccountIdOrderByTransactionDateDesc(accountId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
-  public List<Transaction> getTransactionsForUserByType(UUID userId, TransactionType type) {
-    return transactionRepository.findByUserIdAndType(userId, type);
+  public List<TransactionResponse> getTransactionsForCategory(UUID categoryId) {
+    return transactionRepository.findByCategoryIdOrderByTransactionDateDesc(categoryId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
-  public List<Transaction> getTransactionsForUserBetweenDates(
+  public List<TransactionResponse> getTransactionsForUserByType(UUID userId, TransactionType type) {
+    return transactionRepository.findByUserIdAndTypeOrderByTransactionDateDesc(userId, type)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
+  }
+
+  public List<TransactionResponse> getTransactionsForUserBetweenDates(
       UUID userId,
       LocalDate startDate,
       LocalDate endDate) {
-    return transactionRepository.findByUserIdAndTransactionDateBetween(userId, startDate, endDate);
+    return transactionRepository
+        .findByUserIdAndTransactionDateBetweenOrderByTransactionDateDesc(userId, startDate, endDate)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
 }
