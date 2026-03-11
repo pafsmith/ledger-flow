@@ -3,6 +3,7 @@ package dev.pafsmith.ledgerflow.transaction.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
+import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
@@ -26,6 +27,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @WebMvcTest(TransactionController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -103,5 +107,33 @@ class TransactionControllerTest {
         .andExpect(jsonPath("$.validationErrors.userId").value("User id is required"))
         .andExpect(jsonPath("$.validationErrors.accountId").value("Account id is required"))
         .andExpect(jsonPath("$.validationErrors.description").value("Description is required"));
+  }
+
+  @Test
+  @DisplayName("DELETE /api/transactions/{transactionId} returns 204 when transaction exists")
+  void deleteTransaction_shouldReturnNoContent() throws Exception {
+    UUID transactionId = UUID.randomUUID();
+
+    doNothing().when(transactionService).deleteTransaction(transactionId);
+
+    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  @DisplayName("DELETE /api/transactions/{transactionId} returns 404 when transaction does not exist")
+  void deleteTransaction_shouldReturnNotFound_whenTransactionDoesNotExist() throws Exception {
+    UUID transactionId = UUID.randomUUID();
+
+    doThrow(new ResourceNotFoundException("Transaction not found"))
+        .when(transactionService)
+        .deleteTransaction(transactionId);
+
+    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.status").value(404))
+        .andExpect(jsonPath("$.error").value("Not Found"))
+        .andExpect(jsonPath("$.message").value("Transaction not found"))
+        .andExpect(jsonPath("$.path").value("/api/transactions/" + transactionId));
   }
 }
