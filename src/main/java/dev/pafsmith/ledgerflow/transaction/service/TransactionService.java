@@ -179,28 +179,28 @@ public class TransactionService {
   }
 
   public List<TransactionResponse> getTransactionsForUser(UUID userId) {
-    return transactionRepository.findByUserId(userId)
+    return transactionRepository.findByUserIdOrderByTransactionDateDesc(userId)
         .stream()
         .map(this::mapToResponse)
         .toList();
   }
 
   public List<TransactionResponse> getTransactionsForAccount(UUID accountId) {
-    return transactionRepository.findByAccountId(accountId)
+    return transactionRepository.findByAccountIdOrderByTransactionDateDesc(accountId)
         .stream()
         .map(this::mapToResponse)
         .toList();
   }
 
   public List<TransactionResponse> getTransactionsForCategory(UUID categoryId) {
-    return transactionRepository.findByCategoryId(categoryId)
+    return transactionRepository.findByCategoryIdOrderByTransactionDateDesc(categoryId)
         .stream()
         .map(this::mapToResponse)
         .toList();
   }
 
   public List<TransactionResponse> getTransactionsForUserByType(UUID userId, TransactionType type) {
-    return transactionRepository.findByUserIdAndType(userId, type)
+    return transactionRepository.findByUserIdAndTypeOrderByTransactionDateDesc(userId, type)
         .stream()
         .map(this::mapToResponse)
         .toList();
@@ -210,7 +210,8 @@ public class TransactionService {
       UUID userId,
       LocalDate startDate,
       LocalDate endDate) {
-    return transactionRepository.findByUserIdAndTransactionDateBetween(userId, startDate, endDate)
+    return transactionRepository
+        .findByUserIdAndTransactionDateBetweenOrderByTransactionDateDesc(userId, startDate, endDate)
         .stream()
         .map(this::mapToResponse)
         .toList();

@@ -11,15 +11,15 @@ import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
 
-  List<Transaction> findByUserId(UUID userId);
+  List<Transaction> findByUserIdOrderByTransactionDateDesc(UUID userId);
 
-  List<Transaction> findByAccountId(UUID accountId);
+  List<Transaction> findByAccountIdOrderByTransactionDateDesc(UUID accountId);
 
-  List<Transaction> findByCategoryId(UUID categoryId);
+  List<Transaction> findByCategoryIdOrderByTransactionDateDesc(UUID categoryId);
 
-  List<Transaction> findByUserIdAndType(UUID userId, TransactionType type);
+  List<Transaction> findByUserIdAndTypeOrderByTransactionDateDesc(UUID userId, TransactionType type);
 
-  List<Transaction> findByUserIdAndTransactionDateBetween(
+  List<Transaction> findByUserIdAndTransactionDateBetweenOrderByTransactionDateDesc(
       UUID userId,
       LocalDate startDate,
       LocalDate endDate);
