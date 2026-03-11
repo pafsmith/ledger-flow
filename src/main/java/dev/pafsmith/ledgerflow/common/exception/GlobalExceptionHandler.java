@@ -1,9 +1,12 @@
 package dev.pafsmith.ledgerflow.common.exception;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -52,6 +55,26 @@ public class GlobalExceptionHandler {
         request.getRequestURI());
 
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<Map<String, Object>> handleValidationException(
+      MethodArgumentNotValidException ex,
+      HttpServletRequest request) {
+    Map<String, String> validationErrors = new LinkedHashMap<>();
+
+    ex.getBindingResult().getFieldErrors()
+        .forEach(error -> validationErrors.put(error.getField(), error.getDefaultMessage()));
+
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("timestamp", Instant.now());
+    response.put("status", HttpStatus.BAD_REQUEST.value());
+    response.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
+    response.put("message", "Validation failed");
+    response.put("path", request.getRequestURI());
+    response.put("validationErrors", validationErrors);
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
   }
 
   @ExceptionHandler(Exception.class)

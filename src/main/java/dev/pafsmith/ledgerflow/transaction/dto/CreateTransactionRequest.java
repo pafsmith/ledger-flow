@@ -5,18 +5,40 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class CreateTransactionRequest {
 
+  @NotNull(message = "User id is required")
   private UUID userId; // Pull From auth in the future
+
+  @NotNull(message = "Account id is required")
   private UUID accountId;
+
   private UUID categoryId;
+
   private UUID destinationAccountId;
+
+  @NotBlank(message = "Description is required")
+  @Size(max = 255, message = "Description must be 255 characters or fewer")
   private String description;
+
+  @NotNull(message = "Amount is required")
+  @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
   private BigDecimal amount;
+
+  @NotNull(message = "Transaction type is required")
   private TransactionType type;
+
+  @NotNull(message = "Transaction data is required")
   private LocalDate transactionDate;
+
+  @Size(max = 255, message = "Merchant must be 255 characters or fewer")
   private String merchant;
+
   private String notes;
 
   public CreateTransactionRequest() {

@@ -19,6 +19,7 @@ import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.service.TransactionService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -32,7 +33,7 @@ public class TransactionController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public TransactionResponse createTransaction(@RequestBody CreateTransactionRequest request) {
+  public TransactionResponse createTransaction(@Valid @RequestBody CreateTransactionRequest request) {
     return transactionService.createTransaction(request);
   }
 
