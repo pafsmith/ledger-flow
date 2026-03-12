@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 
 public class UpdateTransactionRequest {
   @NotNull(message = "User id is required")
-  private UUID id;
+  private UUID userId;
 
   @NotNull(message = "Account id is required")
   private UUID accountId;
@@ -42,12 +42,12 @@ public class UpdateTransactionRequest {
 
   }
 
-  public UUID getId() {
-    return id;
+  public UUID getUserId() {
+    return userId;
   }
 
-  public void setId(UUID id) {
-    this.id = id;
+  public void setUserId(UUID userId) {
+    this.userId = userId;
   }
 
   public UUID getAccountId() {

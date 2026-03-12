@@ -16,6 +16,7 @@ import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
+import dev.pafsmith.ledgerflow.transaction.dto.UpdateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.repository.TransactionRepository;
@@ -73,7 +74,14 @@ public class TransactionService {
       }
     }
 
-    validateTransactionRules(request, category, destinationAccount, account);
+    validateTransactionRules(
+        request.getAmount(),
+        request.getDescription(),
+        request.getTransactionDate(),
+        request.getType(),
+        category,
+        destinationAccount,
+        account);
 
     Transaction transaction = new Transaction();
     transaction.setUser(user);
@@ -93,26 +101,30 @@ public class TransactionService {
   }
 
   private void validateTransactionRules(
-      CreateTransactionRequest request,
+      java.math.BigDecimal amount,
+      String description,
+      java.time.LocalDate transactionDate,
+      TransactionType type,
       Category category,
       Account destinationAccount,
       Account sourceAccount) {
-    if (request.getAmount() == null || request.getAmount().signum() <= 0) {
+    if (amount == null || amount.signum() <= 0) {
       throw new BadRequestException("Amount must be greater than zero");
     }
-    if (request.getDescription() == null || request.getDescription().isBlank()) {
+
+    if (description == null || description.isBlank()) {
       throw new BadRequestException("Description is required");
     }
 
-    if (request.getTransactionDate() == null) {
+    if (transactionDate == null) {
       throw new BadRequestException("Transaction date is required");
     }
 
-    if (request.getType() == null) {
+    if (type == null) {
       throw new BadRequestException("Transaction type is required");
     }
 
-    if (request.getType() == TransactionType.TRANSFER) {
+    if (type == TransactionType.TRANSFER) {
       if (destinationAccount == null) {
         throw new BadRequestException("Destination account is required for transfers");
       }
@@ -126,7 +138,7 @@ public class TransactionService {
       }
     }
 
-    if (request.getType() == TransactionType.EXPENSE) {
+    if (type == TransactionType.EXPENSE) {
       if (destinationAccount != null) {
         throw new BadRequestException("Expenses cannot have a destination account");
       }
@@ -140,7 +152,7 @@ public class TransactionService {
       }
     }
 
-    if (request.getType() == TransactionType.INCOME) {
+    if (type == TransactionType.INCOME) {
       if (destinationAccount != null) {
         throw new BadRequestException("Income transactions cannot have a destination account");
       }
@@ -218,6 +230,64 @@ public class TransactionService {
         .stream()
         .map(this::mapToResponse)
         .toList();
+  }
+
+  public TransactionResponse updateTransaction(UUID transactionId, UpdateTransactionRequest request) {
+
+    Transaction transaction = transactionRepository.findById(transactionId)
+        .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+    User user = userRepository.findById(request.getUserId())
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Account account = accountRepository.findById(request.getAccountId())
+        .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+    if (!account.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Account does not belong to user");
+    }
+    Category category = null;
+    if (request.getCategoryId() != null) {
+      category = categoryRepository.findById(request.getCategoryId())
+          .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+      if (!category.getUser().getId().equals(user.getId())) {
+        throw new ForbiddenException("Category does not belong to user");
+      }
+    }
+
+    Account destinationAccount = null;
+    if (request.getDestinationAccountId() != null) {
+      destinationAccount = accountRepository.findById(request.getDestinationAccountId())
+          .orElseThrow(() -> new ResourceNotFoundException("Destination account not found"));
+
+      if (!destinationAccount.getUser().getId().equals(user.getId())) {
+        throw new ForbiddenException("Destination account does not belong to user");
+      }
+    }
+    validateTransactionRules(
+        request.getAmount(),
+        request.getDescription(),
+        request.getTransactionDate(),
+        request.getType(),
+        category,
+        destinationAccount,
+        account);
+
+    transaction.setUser(user);
+    transaction.setAccount(account);
+    transaction.setCategory(category);
+    transaction.setDestinationAccount(destinationAccount);
+    transaction.setDescription(request.getDescription().trim());
+    transaction.setAmount(request.getAmount());
+    transaction.setType(request.getType());
+    transaction.setTransactionDate(request.getTransactionDate());
+    transaction.setMerchant(request.getMerchant());
+    transaction.setNotes(request.getNotes());
+
+    Transaction updatedTransaction = transactionRepository.save(transaction);
+
+    return mapToResponse(updatedTransaction);
   }
 
   public void deleteTransaction(UUID transactionId) {
