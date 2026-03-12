@@ -27,7 +27,9 @@ import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
 import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
+import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
+import dev.pafsmith.ledgerflow.transaction.dto.UpdateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.repository.TransactionRepository;
@@ -166,5 +168,63 @@ class TransactionServiceTest {
         .hasMessage("Expense transactions must use an expense category");
 
     verify(transactionRepository, never()).save(any(Transaction.class));
+  }
+
+  @Test
+  void updateTransaction_shouldUpdateExpenseTransactionSuccessfully() {
+    UUID transactionId = UUID.randomUUID();
+
+    Transaction existingTransaction = new Transaction();
+    existingTransaction.setId(transactionId);
+    existingTransaction.setUser(user);
+    existingTransaction.setAccount(account);
+    existingTransaction.setCategory(category);
+    existingTransaction.setDescription("Old description");
+    existingTransaction.setAmount(new BigDecimal("10.00"));
+    existingTransaction.setType(TransactionType.EXPENSE);
+    existingTransaction.setTransactionDate(LocalDate.of(2026, 3, 1));
+
+    UpdateTransactionRequest request = new UpdateTransactionRequest();
+    request.setUserId(userId);
+    request.setAccountId(accountId);
+    request.setCategoryId(categoryId);
+    request.setDescription("Updated Tesco shop");
+    request.setAmount(new BigDecimal("55.00"));
+    request.setType(TransactionType.EXPENSE);
+    request.setTransactionDate(LocalDate.of(2026, 3, 10));
+    request.setMerchant("Tesco");
+    request.setNotes("Updated");
+
+    when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(existingTransaction));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+    when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    var response = transactionService.updateTransaction(transactionId, request);
+
+    assertThat(response.getDescription()).isEqualTo("Updated Tesco shop");
+    assertThat(response.getAmount()).isEqualByComparingTo("55.00");
+    assertThat(response.getType()).isEqualTo(TransactionType.EXPENSE);
+    assertThat(response.getMerchant()).isEqualTo("Tesco");
+  }
+
+  @Test
+  void updateTransaction_shouldThrowWhenTransactionNotFound() {
+    UUID transactionId = UUID.randomUUID();
+
+    UpdateTransactionRequest request = new UpdateTransactionRequest();
+    request.setUserId(userId);
+    request.setAccountId(accountId);
+    request.setDescription("Updated");
+    request.setAmount(new BigDecimal("55.00"));
+    request.setType(TransactionType.EXPENSE);
+    request.setTransactionDate(LocalDate.of(2026, 3, 10));
+
+    when(transactionRepository.findById(transactionId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> transactionService.updateTransaction(transactionId, request))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("Transaction not found");
   }
 }
