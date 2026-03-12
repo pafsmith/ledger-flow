@@ -5,11 +5,13 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Request body for creating a transaction")
 public class CreateTransactionRequest {
 
   @NotNull(message = "User id is required")
