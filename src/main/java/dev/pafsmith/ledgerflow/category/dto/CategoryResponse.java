@@ -4,7 +4,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "Response body for a category")
 public class CategoryResponse {
 
   private UUID id;

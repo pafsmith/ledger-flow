@@ -1,4 +1,4 @@
-package dev.pafsmith.ledgerflow;
+package dev.pafsmith.ledgerflow.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

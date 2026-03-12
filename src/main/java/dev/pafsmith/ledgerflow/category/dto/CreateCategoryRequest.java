@@ -3,10 +3,12 @@ package dev.pafsmith.ledgerflow.category.dto;
 import java.util.UUID;
 
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Request body for creating a category")
 public class CreateCategoryRequest {
 
   @NotNull(message = "User id is required")

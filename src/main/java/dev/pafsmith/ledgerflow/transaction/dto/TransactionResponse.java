@@ -6,7 +6,9 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "Response body for a transaction")
 public class TransactionResponse {
   private UUID id;
   private UUID userId;

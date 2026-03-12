@@ -5,16 +5,18 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Request body for updating a transaction")
 public class UpdateTransactionRequest {
   @NotNull(message = "User id is required")
   private UUID userId;
 
-  @NotNull(message = "Account id is required")
+
   private UUID accountId;
   private UUID categoryId;
   private UUID destinationAccountId;
