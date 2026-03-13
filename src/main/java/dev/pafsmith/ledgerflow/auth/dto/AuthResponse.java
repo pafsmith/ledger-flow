@@ -11,6 +11,7 @@ public class AuthResponse {
   private String lastName;
   private String email;
   private String message;
+  private String token;
 
   public AuthResponse() {
 
@@ -56,4 +57,11 @@ public class AuthResponse {
     this.message = message;
   }
 
+  public void setToken(String token) {
+    this.token = token;
+  }
+
+  public String getToken() {
+    return token;
+  }
 }

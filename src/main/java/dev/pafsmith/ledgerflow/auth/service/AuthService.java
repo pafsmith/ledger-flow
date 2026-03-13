@@ -1,23 +1,31 @@
 package dev.pafsmith.ledgerflow.auth.service;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import dev.pafsmith.ledgerflow.auth.dto.AuthResponse;
+import dev.pafsmith.ledgerflow.auth.dto.LoginRequest;
 import dev.pafsmith.ledgerflow.auth.dto.RegisterRequest;
+import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
+import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
+import dev.pafsmith.ledgerflow.auth.service.JwtService;
 
 @Service
 public class AuthService {
 
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JwtService jwtService;
 
-  public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+  public AuthService(
+      UserRepository userRepository,
+      PasswordEncoder passwordEncoder,
+      JwtService jwtService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
+    this.jwtService = jwtService;
   }
 
   public AuthResponse register(RegisterRequest request) {
@@ -25,7 +33,7 @@ public class AuthService {
     String email = request.getEmail().trim().toLowerCase();
 
     if (userRepository.existsByEmail(email)) {
-      throw new dev.pafsmith.ledgerflow.common.exception.BadRequestException("Email is already registered");
+      throw new BadRequestException("Email is already registered");
     }
 
     User user = new User();
@@ -47,4 +55,28 @@ public class AuthService {
     return response;
 
   }
+
+  public AuthResponse login(LoginRequest request) {
+    String email = request.getEmail().trim().toLowerCase();
+
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+      throw new BadRequestException("Invalid email or password");
+    }
+
+    String token = jwtService.generateToken(user);
+
+    AuthResponse response = new AuthResponse();
+    response.setUserId(user.getId());
+    response.setFirstName(user.getFirstName());
+    response.setLastName(user.getLastName());
+    response.setEmail(user.getEmail());
+    response.setToken(token);
+    response.setMessage("Login successful");
+
+    return response;
+  }
+
 }
