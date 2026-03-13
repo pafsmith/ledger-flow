@@ -1,9 +1,11 @@
 package dev.pafsmith.ledgerflow.auth.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Request body for registering a new user")
 public class RegisterRequest {
   @NotBlank(message = "First name is required")
   @Size(max = 100, message = "First name must be 100 characters or fewer")
@@ -22,7 +24,7 @@ public class RegisterRequest {
   @Size(min = 8, max = 255, message = "Password must be between 8 and 255 characters")
   private String password;
 
-  private RegisterRequest() {
+  public RegisterRequest() {
 
   }
 

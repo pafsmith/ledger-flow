@@ -2,6 +2,9 @@ package dev.pafsmith.ledgerflow.auth.dto;
 
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Response body for registering a new user")
 public class AuthResponse {
   private UUID userId;
   private String firstName;
