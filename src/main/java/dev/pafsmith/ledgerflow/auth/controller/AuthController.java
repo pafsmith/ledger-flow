@@ -1,6 +1,7 @@
 package dev.pafsmith.ledgerflow.auth.controller;
 
 import dev.pafsmith.ledgerflow.auth.dto.AuthResponse;
+import dev.pafsmith.ledgerflow.auth.dto.LoginRequest;
 import dev.pafsmith.ledgerflow.auth.dto.RegisterRequest;
 import dev.pafsmith.ledgerflow.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,5 +26,10 @@ public class AuthController {
   @Operation(summary = "Register a new user", description = "Creates a new user account")
   public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
     return authService.register(request);
+  }
+
+  @PostMapping("/login")
+  public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+    return authService.login(request);
   }
 }
