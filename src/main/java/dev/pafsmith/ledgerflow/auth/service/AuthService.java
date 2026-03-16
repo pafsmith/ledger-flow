@@ -4,13 +4,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import dev.pafsmith.ledgerflow.auth.dto.AuthResponse;
+import dev.pafsmith.ledgerflow.auth.dto.CurrentUserResponse;
 import dev.pafsmith.ledgerflow.auth.dto.LoginRequest;
 import dev.pafsmith.ledgerflow.auth.dto.RegisterRequest;
 import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
-import dev.pafsmith.ledgerflow.auth.service.JwtService;
 
 @Service
 public class AuthService {
@@ -79,4 +79,16 @@ public class AuthService {
     return response;
   }
 
+  public CurrentUserResponse getCurrentUser(String email) {
+    User user = userRepository.findByEmail(email.trim().toLowerCase())
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    CurrentUserResponse response = new CurrentUserResponse();
+    response.setUserId(user.getId());
+    response.setFirstName(user.getFirstName());
+    response.setLastName(user.getLastName());
+    response.setEmail(user.getEmail());
+
+    return response;
+  }
 }
