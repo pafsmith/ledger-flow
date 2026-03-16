@@ -28,13 +28,14 @@ import dev.pafsmith.ledgerflow.category.dto.CategoryResponse;
 import dev.pafsmith.ledgerflow.category.dto.CreateCategoryRequest;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.category.service.CategoryService;
+import dev.pafsmith.ledgerflow.common.BaseControllerTest;
 import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 
 @WebMvcTest(CategoryController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
-class CategoryControllerTest {
+class CategoryControllerTest extends BaseControllerTest {
 
   @Autowired
   private MockMvc mockMvc;

@@ -2,6 +2,7 @@ package dev.pafsmith.ledgerflow.transaction.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import dev.pafsmith.ledgerflow.common.BaseControllerTest;
 import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
@@ -36,7 +37,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @WebMvcTest(TransactionController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
-class TransactionControllerTest {
+class TransactionControllerTest extends BaseControllerTest {
 
   @Autowired
   private MockMvc mockMvc;

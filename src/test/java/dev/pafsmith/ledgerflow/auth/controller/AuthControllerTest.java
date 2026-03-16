@@ -1,11 +1,15 @@
 package dev.pafsmith.ledgerflow.auth.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import dev.pafsmith.ledgerflow.auth.dto.AuthResponse;
-import dev.pafsmith.ledgerflow.auth.dto.RegisterRequest;
-import dev.pafsmith.ledgerflow.auth.service.AuthService;
-import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,17 +20,20 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import dev.pafsmith.ledgerflow.auth.dto.AuthResponse;
+import dev.pafsmith.ledgerflow.auth.dto.CurrentUserResponse;
+import dev.pafsmith.ledgerflow.auth.dto.RegisterRequest;
+import dev.pafsmith.ledgerflow.auth.service.AuthService;
+import dev.pafsmith.ledgerflow.common.BaseControllerTest;
+import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
-class AuthControllerTest {
+class AuthControllerTest extends BaseControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
@@ -83,5 +90,24 @@ class AuthControllerTest {
         .andExpect(jsonPath("$.validationErrors.firstName").value("First name is required"))
         .andExpect(jsonPath("$.validationErrors.lastName").value("Last name is required"))
         .andExpect(jsonPath("$.validationErrors.email").value("Email must be valid"));
+  }
+
+  @Test
+  @DisplayName("GET /api/auth/me returns current user when authenticated")
+  void getCurrentUser_shouldReturnCurrentUser() throws Exception {
+    CurrentUserResponse response = new CurrentUserResponse();
+    response.setUserId(UUID.randomUUID());
+    response.setFirstName("Paul");
+    response.setLastName("Smith");
+    response.setEmail("paul@test.com");
+
+    when(authService.getCurrentUser("paul@test.com")).thenReturn(response);
+
+    mockMvc.perform(get("/api/auth/me")
+        .principal(() -> "paul@test.com"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.email").value("paul@test.com"))
+        .andExpect(jsonPath("$.firstName").value("Paul"))
+        .andExpect(jsonPath("$.lastName").value("Smith"));
   }
 }

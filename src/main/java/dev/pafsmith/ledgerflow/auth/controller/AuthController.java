@@ -8,6 +8,9 @@ import dev.pafsmith.ledgerflow.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+
+import java.security.Principal;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +39,7 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public CurrentUserResponse getCurrentUser(Authentication authentication) {
-    return authService.getCurrentUser(authentication.getName());
+  public CurrentUserResponse getCurrentUser(Principal principal) {
+    return authService.getCurrentUser(principal.getName());
   }
 }
