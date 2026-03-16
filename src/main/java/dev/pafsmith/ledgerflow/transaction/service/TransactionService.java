@@ -43,8 +43,9 @@ public class TransactionService {
     this.categoryRepository = categoryRepository;
   }
 
-  public TransactionResponse createTransaction(CreateTransactionRequest request) {
-    User user = userRepository.findById(request.getUserId())
+  public TransactionResponse createTransaction(CreateTransactionRequest request, String userEmail) {
+
+    User user = userRepository.findByEmail(userEmail)
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     Account account = accountRepository.findById(request.getAccountId())

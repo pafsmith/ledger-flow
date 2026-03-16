@@ -57,7 +57,6 @@ class TransactionControllerTest extends BaseControllerTest {
     UUID transactionId = UUID.randomUUID();
 
     CreateTransactionRequest request = new CreateTransactionRequest();
-    request.setUserId(userId);
     request.setAccountId(accountId);
     request.setCategoryId(categoryId);
     request.setDescription("Tesco shop");
@@ -79,9 +78,10 @@ class TransactionControllerTest extends BaseControllerTest {
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(transactionService.createTransaction(any(CreateTransactionRequest.class))).thenReturn(response);
+    when(transactionService.createTransaction(any(CreateTransactionRequest.class), any(String.class))).thenReturn(response);
 
     mockMvc.perform(post("/api/transactions")
+        .principal(() -> "paul@test.com")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -107,7 +107,6 @@ class TransactionControllerTest extends BaseControllerTest {
         .content(invalidJson))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("Validation failed"))
-        .andExpect(jsonPath("$.validationErrors.userId").value("User id is required"))
         .andExpect(jsonPath("$.validationErrors.accountId").value("Account id is required"))
         .andExpect(jsonPath("$.validationErrors.description").value("Description is required"));
   }

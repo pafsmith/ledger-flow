@@ -14,9 +14,6 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "Request body for creating a transaction")
 public class CreateTransactionRequest {
 
-  @NotNull(message = "User id is required")
-  private UUID userId; // Pull From auth in the future
-
   @NotNull(message = "Account id is required")
   private UUID accountId;
 
@@ -45,14 +42,6 @@ public class CreateTransactionRequest {
 
   public CreateTransactionRequest() {
 
-  }
-
-  public UUID getUserId() {
-    return userId;
-  }
-
-  public void setUserId(UUID userId) {
-    this.userId = userId;
   }
 
   public UUID getAccountId() {

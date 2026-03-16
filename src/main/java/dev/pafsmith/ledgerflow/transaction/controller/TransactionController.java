@@ -1,5 +1,6 @@
 package dev.pafsmith.ledgerflow.transaction.controller;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -46,8 +47,9 @@ public class TransactionController {
       @ApiResponse(responseCode = "400", description = "Validation failed"),
       @ApiResponse(responseCode = "404", description = "Related resource not found")
   })
-  public TransactionResponse createTransaction(@Valid @RequestBody CreateTransactionRequest request) {
-    return transactionService.createTransaction(request);
+  public TransactionResponse createTransaction(@Valid @RequestBody CreateTransactionRequest request,
+      Principal principal) {
+    return transactionService.createTransaction(request, principal.getName());
   }
 
   @GetMapping("/{transactionId}")
