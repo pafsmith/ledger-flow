@@ -92,7 +92,6 @@ class TransactionServiceTest {
   @Test
   void createTransaction_shouldSaveExpenseTransactionSuccessfully() {
     CreateTransactionRequest request = new CreateTransactionRequest();
-    request.setUserId(userId);
     request.setAccountId(accountId);
     request.setCategoryId(categoryId);
     request.setDescription("Tesco shop");
@@ -101,7 +100,7 @@ class TransactionServiceTest {
     request.setTransactionDate(LocalDate.of(2026, 3, 10));
     request.setMerchant("Tesco");
 
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
     when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
@@ -110,7 +109,7 @@ class TransactionServiceTest {
       return transaction;
     });
 
-    var response = transactionService.createTransaction(request);
+    var response = transactionService.createTransaction(request, "paul@test.com");
 
     assertThat(response).isNotNull();
     assertThat(response.getDescription()).isEqualTo("Tesco shop");
@@ -129,17 +128,16 @@ class TransactionServiceTest {
   @Test
   void createTransaction_shouldThrowWhenTransferHasNoDestinationAccount() {
     CreateTransactionRequest request = new CreateTransactionRequest();
-    request.setUserId(userId);
     request.setAccountId(accountId);
     request.setDescription("Move money");
     request.setAmount(new BigDecimal("100.00"));
     request.setType(TransactionType.TRANSFER);
     request.setTransactionDate(LocalDate.of(2026, 3, 10));
 
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
 
-    assertThatThrownBy(() -> transactionService.createTransaction(request))
+    assertThatThrownBy(() -> transactionService.createTransaction(request, "paul@test.com"))
         .isInstanceOf(BadRequestException.class)
         .hasMessage("Destination account is required for transfers");
 
@@ -151,7 +149,6 @@ class TransactionServiceTest {
     category.setType(CategoryType.INCOME);
 
     CreateTransactionRequest request = new CreateTransactionRequest();
-    request.setUserId(userId);
     request.setAccountId(accountId);
     request.setCategoryId(categoryId);
     request.setDescription("Tesco shop");
@@ -159,11 +156,11 @@ class TransactionServiceTest {
     request.setType(TransactionType.EXPENSE);
     request.setTransactionDate(LocalDate.of(2026, 3, 10));
 
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
 
-    assertThatThrownBy(() -> transactionService.createTransaction(request))
+    assertThatThrownBy(() -> transactionService.createTransaction(request, "paul@test.com"))
         .isInstanceOf(BadRequestException.class)
         .hasMessage("Expense transactions must use an expense category");
 
