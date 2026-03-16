@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dev.pafsmith.ledgerflow.auth.dto.AuthResponse;
 import dev.pafsmith.ledgerflow.auth.dto.LoginRequest;
 import dev.pafsmith.ledgerflow.auth.service.AuthService;
+import dev.pafsmith.ledgerflow.common.BaseControllerTest;
 import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
-class AuthLoginControllerTest {
+class AuthLoginControllerTest extends BaseControllerTest {
 
   @Autowired
   private MockMvc mockMvc;

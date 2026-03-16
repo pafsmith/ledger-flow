@@ -17,6 +17,7 @@ public class UpdateTransactionRequest {
   private UUID userId;
 
 
+  @NotNull(message = "Account id is required")
   private UUID accountId;
   private UUID categoryId;
   private UUID destinationAccountId;
