@@ -1,6 +1,7 @@
 package dev.pafsmith.ledgerflow.auth.service;
 
 import dev.pafsmith.ledgerflow.user.entity.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.function.Function;
 
 @Service
 public class JwtService {
@@ -39,11 +41,27 @@ public class JwtService {
   }
 
   public String extractUsername(String token) {
-    return Jwts.parser()
+    return extractClaim(token, Claims::getSubject);
+  }
+
+  public boolean isTokenValid(String token, String username) {
+    String extractedUsername = extractUsername(token);
+    return extractedUsername.equals(username) && !isTokenExpired(token);
+  }
+
+  private boolean isTokenExpired(String token) {
+    Date expiration = extractClaim(token, Claims::getExpiration);
+    return expiration.before(new Date());
+  }
+
+  private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    Claims claims = Jwts.parser()
         .verifyWith(secretKey)
         .build()
         .parseSignedClaims(token)
-        .getPayload()
-        .getSubject();
+        .getPayload();
+
+    return claimsResolver.apply(claims);
   }
+
 }

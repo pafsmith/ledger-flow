@@ -32,4 +32,9 @@ public class AuthController {
   public AuthResponse login(@Valid @RequestBody LoginRequest request) {
     return authService.login(request);
   }
+
+  @GetMapping("/me")
+  public String me(org.springframework.security.core.Authentication authentication) {
+    return authentication.getName();
+  }
 }
