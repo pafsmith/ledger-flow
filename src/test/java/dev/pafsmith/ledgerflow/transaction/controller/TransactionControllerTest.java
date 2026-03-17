@@ -117,9 +117,10 @@ class TransactionControllerTest extends BaseControllerTest {
   void deleteTransaction_shouldReturnNoContent() throws Exception {
     UUID transactionId = UUID.randomUUID();
 
-    doNothing().when(transactionService).deleteTransaction(transactionId);
+    doNothing().when(transactionService).deleteTransaction(transactionId, "paul@test.com");
 
-    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId))
+    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId)
+        .principal(() -> "paul@test.com"))
         .andExpect(status().isNoContent());
   }
 
@@ -130,9 +131,10 @@ class TransactionControllerTest extends BaseControllerTest {
 
     doThrow(new ResourceNotFoundException("Transaction not found"))
         .when(transactionService)
-        .deleteTransaction(transactionId);
+        .deleteTransaction(transactionId, "paul@test.com");
 
-    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId))
+    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId)
+        .principal(() -> "paul@test.com"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.status").value(404))
         .andExpect(jsonPath("$.error").value("Not Found"))
