@@ -106,7 +106,8 @@ public class TransactionController {
   @DeleteMapping("/{transactionId}")
   @Operation(summary = "Delete a transaction")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deleteTransaction(@PathVariable UUID transactionId) {
-    transactionService.deleteTransaction(transactionId);
+  public void deleteTransaction(@PathVariable UUID transactionId,
+      Principal principal) {
+    transactionService.deleteTransaction(transactionId, principal.getName());
   }
 }

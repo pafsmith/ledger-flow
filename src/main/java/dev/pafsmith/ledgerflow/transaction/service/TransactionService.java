@@ -294,9 +294,17 @@ public class TransactionService {
     return mapToResponse(updatedTransaction);
   }
 
-  public void deleteTransaction(UUID transactionId) {
+  public void deleteTransaction(UUID transactionId,
+      String userEmail) {
     Transaction transaction = transactionRepository.findById(transactionId)
         .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+    User user = userRepository.findByEmail(userEmail.toLowerCase())
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    if (!transaction.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Transaction does not belong to user");
+    }
 
     transactionRepository.delete(transaction);
   }
