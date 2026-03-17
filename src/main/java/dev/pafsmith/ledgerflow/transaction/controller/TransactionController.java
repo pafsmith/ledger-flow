@@ -54,8 +54,9 @@ public class TransactionController {
 
   @GetMapping("/{transactionId}")
   @Operation(summary = "Get transaction by id")
-  public TransactionResponse getTransactionById(@PathVariable UUID transactionId) {
-    return transactionService.getTransactionById(transactionId);
+  public TransactionResponse getTransactionById(@PathVariable UUID transactionId,
+      Principal principal) {
+    return transactionService.getTransactionById(transactionId, principal.getName());
   }
 
   @GetMapping("/user/{userId}")
@@ -106,7 +107,8 @@ public class TransactionController {
   @DeleteMapping("/{transactionId}")
   @Operation(summary = "Delete a transaction")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deleteTransaction(@PathVariable UUID transactionId) {
-    transactionService.deleteTransaction(transactionId);
+  public void deleteTransaction(@PathVariable UUID transactionId,
+      Principal principal) {
+    transactionService.deleteTransaction(transactionId, principal.getName());
   }
 }
