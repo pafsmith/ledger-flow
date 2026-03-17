@@ -13,9 +13,8 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "Request body for updating a transaction")
 public class UpdateTransactionRequest {
-  @NotNull(message = "User id is required")
-  private UUID userId;
-
+  // @NotNull(message = "User id is required")
+  // private UUID userId;
 
   @NotNull(message = "Account id is required")
   private UUID accountId;
@@ -45,13 +44,13 @@ public class UpdateTransactionRequest {
 
   }
 
-  public UUID getUserId() {
-    return userId;
-  }
-
-  public void setUserId(UUID userId) {
-    this.userId = userId;
-  }
+  // public UUID getUserId() {
+  // return userId;
+  // }
+  //
+  // public void setUserId(UUID userId) {
+  // this.userId = userId;
+  // }
 
   public UUID getAccountId() {
     return accountId;

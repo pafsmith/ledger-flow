@@ -233,14 +233,17 @@ public class TransactionService {
         .toList();
   }
 
-  public TransactionResponse updateTransaction(UUID transactionId, UpdateTransactionRequest request) {
+  public TransactionResponse updateTransaction(UUID transactionId, UpdateTransactionRequest request, String userEmail) {
 
     Transaction transaction = transactionRepository.findById(transactionId)
         .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
-    User user = userRepository.findById(request.getUserId())
+    User user = userRepository.findByEmail(userEmail.toLowerCase())
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+    if (!transaction.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Transaction does not belong to user");
+    }
     Account account = accountRepository.findById(request.getAccountId())
         .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
