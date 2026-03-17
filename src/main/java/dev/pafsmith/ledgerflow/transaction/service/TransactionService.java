@@ -188,9 +188,15 @@ public class TransactionService {
     return response;
   }
 
-  public TransactionResponse getTransactionById(UUID transactionId) {
+  public TransactionResponse getTransactionById(UUID transactionId, String userEmail) {
     Transaction transaction = transactionRepository.findById(transactionId)
         .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+    User user = userRepository.findByEmail(userEmail.toLowerCase())
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    if (!transaction.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Transaction does not belong to user");
+    }
     return mapToResponse(transaction);
   }
 

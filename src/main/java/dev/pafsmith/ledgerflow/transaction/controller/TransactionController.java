@@ -54,8 +54,9 @@ public class TransactionController {
 
   @GetMapping("/{transactionId}")
   @Operation(summary = "Get transaction by id")
-  public TransactionResponse getTransactionById(@PathVariable UUID transactionId) {
-    return transactionService.getTransactionById(transactionId);
+  public TransactionResponse getTransactionById(@PathVariable UUID transactionId,
+      Principal principal) {
+    return transactionService.getTransactionById(transactionId, principal.getName());
   }
 
   @GetMapping("/user/{userId}")
