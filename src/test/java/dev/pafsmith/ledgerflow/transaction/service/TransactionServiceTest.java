@@ -182,7 +182,7 @@ class TransactionServiceTest {
     existingTransaction.setTransactionDate(LocalDate.of(2026, 3, 1));
 
     UpdateTransactionRequest request = new UpdateTransactionRequest();
-    request.setUserId(userId);
+    // request.setUserId(userId);
     request.setAccountId(accountId);
     request.setCategoryId(categoryId);
     request.setDescription("Updated Tesco shop");
@@ -193,12 +193,12 @@ class TransactionServiceTest {
     request.setNotes("Updated");
 
     when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(existingTransaction));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
     when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    var response = transactionService.updateTransaction(transactionId, request);
+    var response = transactionService.updateTransaction(transactionId, request, "paul@test.com");
 
     assertThat(response.getDescription()).isEqualTo("Updated Tesco shop");
     assertThat(response.getAmount()).isEqualByComparingTo("55.00");
@@ -211,7 +211,7 @@ class TransactionServiceTest {
     UUID transactionId = UUID.randomUUID();
 
     UpdateTransactionRequest request = new UpdateTransactionRequest();
-    request.setUserId(userId);
+    // request.setUserId(userId);
     request.setAccountId(accountId);
     request.setDescription("Updated");
     request.setAmount(new BigDecimal("55.00"));
@@ -220,7 +220,7 @@ class TransactionServiceTest {
 
     when(transactionRepository.findById(transactionId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> transactionService.updateTransaction(transactionId, request))
+    assertThatThrownBy(() -> transactionService.updateTransaction(transactionId, request, "paul@test.com"))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Transaction not found");
   }

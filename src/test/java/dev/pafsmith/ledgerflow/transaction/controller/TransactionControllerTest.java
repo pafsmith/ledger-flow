@@ -78,7 +78,8 @@ class TransactionControllerTest extends BaseControllerTest {
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(transactionService.createTransaction(any(CreateTransactionRequest.class), any(String.class))).thenReturn(response);
+    when(transactionService.createTransaction(any(CreateTransactionRequest.class), any(String.class)))
+        .thenReturn(response);
 
     mockMvc.perform(post("/api/transactions")
         .principal(() -> "paul@test.com")
@@ -148,7 +149,7 @@ class TransactionControllerTest extends BaseControllerTest {
     UUID transactionId = UUID.randomUUID();
 
     UpdateTransactionRequest request = new UpdateTransactionRequest();
-    request.setUserId(userId);
+    // request.setUserId(userId);
     request.setAccountId(accountId);
     request.setCategoryId(categoryId);
     request.setDescription("Updated Tesco shop");
@@ -170,10 +171,11 @@ class TransactionControllerTest extends BaseControllerTest {
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(transactionService.updateTransaction(any(UUID.class), any(UpdateTransactionRequest.class)))
+    when(transactionService.updateTransaction(any(UUID.class), any(UpdateTransactionRequest.class), any(String.class)))
         .thenReturn(response);
 
     mockMvc.perform(put("/api/transactions/{transactionId}", transactionId)
+        .principal(() -> "paul@test.com")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -197,11 +199,13 @@ class TransactionControllerTest extends BaseControllerTest {
         """;
 
     mockMvc.perform(put("/api/transactions/{transactionId}", transactionId)
+        .principal(() -> "paul@test.com")
         .contentType(MediaType.APPLICATION_JSON)
         .content(invalidJson))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("Validation failed"))
-        .andExpect(jsonPath("$.validationErrors.userId").value("User id is required"))
+        // .andExpect(jsonPath("$.validationErrors.userId").value("User id is
+        // required"))
         .andExpect(jsonPath("$.validationErrors.accountId").value("Account id is required"))
         .andExpect(jsonPath("$.validationErrors.description").value("Description is required"));
   }
