@@ -98,8 +98,9 @@ public class TransactionController {
   @Operation(summary = "Update a transaction")
   public TransactionResponse updateTransaction(
       @PathVariable UUID transactionId,
-      @Valid @RequestBody UpdateTransactionRequest request) {
-    return transactionService.updateTransaction(transactionId, request);
+      @Valid @RequestBody UpdateTransactionRequest request,
+      Principal principal) {
+    return transactionService.updateTransaction(transactionId, request, principal.getName());
   }
 
   @DeleteMapping("/{transactionId}")
