@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
+import dev.pafsmith.ledgerflow.transaction.dto.PagedTransactionResponse;
+import dev.pafsmith.ledgerflow.transaction.dto.TransactionFilterRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.dto.UpdateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
@@ -50,6 +52,23 @@ public class TransactionController {
   public TransactionResponse createTransaction(@Valid @RequestBody CreateTransactionRequest request,
       Principal principal) {
     return transactionService.createTransaction(request, principal.getName());
+  }
+
+  @GetMapping
+  public PagedTransactionResponse getTransactions(
+      TransactionFilterRequest filter,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(defaultValue = "transactionDate") String sortBy,
+      @RequestParam(defaultValue = "desc") String direction,
+      Principal principal) {
+    return transactionService.getTransactions(
+        principal.getName(),
+        filter,
+        page,
+        size,
+        sortBy,
+        direction);
   }
 
   @GetMapping("/{transactionId}")

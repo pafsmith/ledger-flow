@@ -4,6 +4,10 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import dev.pafsmith.ledgerflow.account.entity.Account;
@@ -15,11 +19,14 @@ import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
 import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
+import dev.pafsmith.ledgerflow.transaction.dto.PagedTransactionResponse;
+import dev.pafsmith.ledgerflow.transaction.dto.TransactionFilterRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.dto.UpdateTransactionRequest;
 import dev.pafsmith.ledgerflow.transaction.entity.Transaction;
 import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.repository.TransactionRepository;
+import dev.pafsmith.ledgerflow.transaction.specification.TransactionSpecification;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
 
@@ -313,5 +320,38 @@ public class TransactionService {
     }
 
     transactionRepository.delete(transaction);
+  }
+
+  public PagedTransactionResponse getTransactions(
+      String userEmail,
+      TransactionFilterRequest filter,
+      int page,
+      int size,
+      String sortBy,
+      String direction) {
+    User user = userRepository.findByEmail(userEmail.toLowerCase())
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Sort sort = direction.equals("asc")
+        ? Sort.by(sortBy).ascending()
+        : Sort.by(sortBy).descending();
+
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<Transaction> transactionPage = transactionRepository.findAll(
+        TransactionSpecification.withFilters(user.getId(), filter),
+        pageable);
+
+    PagedTransactionResponse response = new PagedTransactionResponse();
+    response.setContent(transactionPage.getContent().stream().map(this::mapToResponse).toList());
+    response.setPage(transactionPage.getNumber());
+    response.setSize(transactionPage.getSize());
+    response.setTotalElements(transactionPage.getTotalElements());
+    response.setTotalPages(transactionPage.getTotalPages());
+    response.setFirst(transactionPage.isFirst());
+    response.setLast(transactionPage.isLast());
+
+    return response;
+
   }
 }
