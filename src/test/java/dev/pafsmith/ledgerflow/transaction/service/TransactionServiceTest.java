@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import dev.pafsmith.ledgerflow.account.entity.Account;
 import dev.pafsmith.ledgerflow.account.enums.AccountType;
@@ -35,6 +36,8 @@ import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.repository.TransactionRepository;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
+
+import dev.pafsmith.ledgerflow.transaction.dto.TransactionFilterRequest;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceTest {
@@ -223,5 +226,39 @@ class TransactionServiceTest {
     assertThatThrownBy(() -> transactionService.updateTransaction(transactionId, request, "paul@test.com"))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Transaction not found");
+  }
+
+  @Test
+  void getTransactions_shouldReturnPagedTransactionsForAuthenticatedUser() {
+    TransactionFilterRequest filter = new TransactionFilterRequest();
+    filter.setType(TransactionType.EXPENSE);
+
+    Transaction transaction = new Transaction();
+    transaction.setId(UUID.randomUUID());
+    transaction.setUser(user);
+    transaction.setAccount(account);
+    transaction.setCategory(category);
+    transaction.setDescription("Tesco shop");
+    transaction.setAmount(new BigDecimal("45.50"));
+    transaction.setType(TransactionType.EXPENSE);
+    transaction.setTransactionDate(LocalDate.of(2026, 3, 10));
+
+    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
+    when(transactionRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
+        any(Pageable.class)))
+        .thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(transaction)));
+
+    var response = transactionService.getTransactions(
+        "paul@test.com",
+        filter,
+        0,
+        10,
+        "transactionDate",
+        "desc");
+
+    assertThat(response).isNotNull();
+    assertThat(response.getContent()).hasSize(1);
+    assertThat(response.getContent().get(0).getDescription()).isEqualTo("Tesco shop");
+    assertThat(response.getTotalElements()).isEqualTo(1);
   }
 }
