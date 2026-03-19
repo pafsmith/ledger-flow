@@ -1,38 +1,46 @@
 package dev.pafsmith.ledgerflow.transaction.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import dev.pafsmith.ledgerflow.common.BaseControllerTest;
-import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
-import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
-import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
-import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
-import dev.pafsmith.ledgerflow.transaction.dto.UpdateTransactionRequest;
-import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
-import dev.pafsmith.ledgerflow.transaction.service.TransactionService;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import dev.pafsmith.ledgerflow.common.BaseControllerTest;
+import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
+import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
+import dev.pafsmith.ledgerflow.transaction.dto.CreateTransactionRequest;
+import dev.pafsmith.ledgerflow.transaction.dto.PagedTransactionResponse;
+import dev.pafsmith.ledgerflow.transaction.dto.TransactionFilterRequest;
+import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
+import dev.pafsmith.ledgerflow.transaction.dto.UpdateTransactionRequest;
+import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
+import dev.pafsmith.ledgerflow.transaction.service.TransactionService;
 
 @WebMvcTest(TransactionController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -210,5 +218,46 @@ class TransactionControllerTest extends BaseControllerTest {
         // required"))
         .andExpect(jsonPath("$.validationErrors.accountId").value("Account id is required"))
         .andExpect(jsonPath("$.validationErrors.description").value("Description is required"));
+  }
+
+  @Test
+  @DisplayName("GET /api/transactions returns paged transactions for authenticated user")
+  void getTransactions_shouldReturnPagedTransactions() throws Exception {
+    PagedTransactionResponse response = new PagedTransactionResponse();
+
+    TransactionResponse transaction = new TransactionResponse();
+    transaction.setId(UUID.randomUUID());
+    transaction.setDescription("Tesco shop");
+    transaction.setAmount(new BigDecimal("45.50"));
+    transaction.setType(TransactionType.EXPENSE);
+    transaction.setTransactionDate(LocalDate.of(2026, 3, 10));
+
+    response.setContent(java.util.List.of(transaction));
+    response.setPage(0);
+    response.setSize(10);
+    response.setTotalElements(1);
+    response.setTotalPages(1);
+    response.setFirst(true);
+    response.setLast(true);
+
+    when(transactionService.getTransactions(
+        anyString(),
+        any(TransactionFilterRequest.class),
+        eq(0),
+        eq(10),
+        eq("transactionDate"),
+        eq("desc"))).thenReturn(response);
+
+    mockMvc.perform(get("/api/transactions")
+        .principal(() -> "paul@test.com")
+        .param("page", "0")
+        .param("size", "10")
+        .param("sortBy", "transactionDate")
+        .param("direction", "desc"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content.length()").value(1))
+        .andExpect(jsonPath("$.content[0].description").value("Tesco shop"))
+        .andExpect(jsonPath("$.totalElements").value(1))
+        .andExpect(jsonPath("$.first").value(true));
   }
 }
