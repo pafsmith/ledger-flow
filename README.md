@@ -1,19 +1,23 @@
-# LedgerFlow
+## LedgerFlow
 
-LedgerFlow is a **personal finance backend API** built with **Spring Boot**.  
-It allows users to track accounts, manage transactions, organise spending into categories, and build budgets.
+LedgerFlow is a **personal finance backend API** built with Spring Boot.
 
-This project is designed to demonstrate:
+It allows users to:
 
-- REST API design
-- layered backend architecture
-- database migrations
-- validation and error handling
-- automated testing
+- manage transactions
+- organise spending into categories
+- (soon) track budgets
+
+The project is designed to simulate a **real-world backend system**, focusing on:
+
+- secure API design
+- user-scoped data access
+- clean architecture
+- testability
 
 ---
 
-# Tech Stack
+## Tech Stack
 
 ### Backend
 
@@ -26,11 +30,12 @@ This project is designed to demonstrate:
 ### Database
 
 - PostgreSQL
-- Flyway (database migrations)
+- Flyway (migrations)
 
-### API Documentation
+### Auth
 
-- OpenAPI / Swagger (springdoc-openapi)
+- JWT (JSON Web Tokens)
+- BCrypt password hashing
 
 ### Testing
 
@@ -38,213 +43,201 @@ This project is designed to demonstrate:
 - Mockito
 - MockMvc
 
-### Build Tool
+### API Docs
 
-- Maven
+- OpenAPI / Swagger
 
 ---
 
-# Features Implemented
+## Features
 
-## Transactions
-
-Create, retrieve, update, and delete financial transactions.
-
-Endpoints:
+### Authentication
 
 ```
-POST   /api/transactions
-GET    /api/transactions/{transactionId}
-GET    /api/transactions/user/{userId}
-GET    /api/transactions/account/{accountId}
-GET    /api/transactions/category/{categoryId}
-PUT    /api/transactions/{transactionId}
+POST /api/auth/register
+POST /api/auth/login
+GET /api/auth/me
+
+```
+
+- users register with email + password
+- passwords are securely hashed using BCrypt
+- login returns a JWT token
+
+- `/api/auth/me` returns the authenticated user
+
+### Transactions
+
+```
+POST /api/transactions
+GET /api/transactions
+GET /api/transactions/{transactionId}
+PUT /api/transactions/{transactionId}
 DELETE /api/transactions/{transactionId}
 ```
 
-Supported transaction types:
+Transactions are:
 
-- EXPENSE
-- INCOME
-- TRANSFER
-
-Validation rules enforce:
-
-- positive transaction amounts
-- correct category types
-- correct transfer behaviour
+- scoped to the authenticated user
+- protected by JWT
+- validated using Bean Validation
 
 ---
 
-## Categories
+## Filtering & Pagination
 
-Categories organise transactions into spending groups.
+Transactions support:
 
-Endpoints:
+- type (EXPENSE / INCOME / TRANSFER)
+- category
+- account
+- date range
+- amount range
+- pagination
+- sorting
+
+### Example
 
 ```
-POST /api/categories
-GET  /api/categories/{categoryId}
-GET  /api/categories/user/{userId}
-GET  /api/categories/user/{userId}/type/{type}
+GET /api/transactions?type=EXPENSE&from=2026-03-01&to=2026-03-31&page=0&size=10&sortBy=transactionDate&direction=desc
+Authorization: Bearer <token>
 ```
 
-Category types:
-
-- EXPENSE
-- INCOME
-
 ---
 
-## Validation
+## Authentication Flow
 
-Requests are validated using **Jakarta Bean Validation**.
+### 1. Register
 
-Examples:
+```
+POST /api/auth/register
+{
+ "firstName": "Paul",
+ "lastName": "Smith",
+ "email": "<paul@test.com>",
+ "password": "password123"
+}
+```
 
-- `@NotNull`
-- `@NotBlank`
-- `@DecimalMin`
-- `@Size`
+### 2. Login
 
-Validation errors return structured API responses.
+```
+POST /api/auth/login
+{
+ "email": "<paul@test.com>",
+ "password": "password123"
+}
+```
 
----
-
-## Error Handling
-
-A **global exception handler** provides consistent responses.
-
-Example error:
+Response:
 
 ```
 {
-  "timestamp": "2026-03-10T12:30:00Z",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Transaction not found",
-  "path": "/api/transactions/123"
+ "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+### 3. Use token
+
+```
+Authorization: Bearer <token>
+```
+
+---
+
+## Example Transaction Request
+
+```
+POST /api/transactions
+{
+ "accountId": "22222222-2222-2222-2222-222222222222",
+ "categoryId": "33333333-3333-3333-3333-333333333333",
+ "description": "Tesco shop",
+ "amount": 45.50,
+ "type": "EXPENSE",
+ "transactionDate": "2026-03-10"
 }
 ```
 
 ---
 
-# API Documentation
+## Security
 
-Swagger UI is available at:
-
-<http://localhost:8080/swagger-ui.html>
-
-The OpenAPI specification is available at:
-
-`/v3/api-docs`
+- all endpoints (except auth + Swagger) require JWT
+- user identity is derived from the token (not request body)
+- users cannot access other users’ data
+- stateless authentication (no sessions)
 
 ---
 
-# Database
-
-The application uses **PostgreSQL**.
-
-Schema management is handled using **Flyway migrations**.
-
-Migrations are located in:
-
-`src/main/resources/db/migration`
-
-Seed data is included to simplify local testing.
-
----
-
-# Running the Application
+## Running Locally
 
 ### 1. Start PostgreSQL
 
-Example using Docker:
-
 ```
 docker run -d \
-  --name ledgerflow-postgres \
-  -p 5432:5432 \
-  -e POSTGRES_DB=ledgerflow \
-  -e POSTGRES_USER=ledgerflow_user \
-  -e POSTGRES_PASSWORD=ledgerflow_password \
-  postgres:15
+ --name ledgerflow-postgres \
+ -p 5432:5432 \
+ -e POSTGRES_DB=ledgerflow \
+ -e POSTGRES_USER=postgres \
+ -e POSTGRES_PASSWORD=postgres \
+ postgres:15
 ```
 
-### 2. Create .env file from .env.example
+### 2. Set environment variables
 
-`cp .env.example .env`
+```
+export JWT_SECRET=your-secure-secret-key
+export JWT_EXPIRATION=3600000
+```
 
-### 3. Run the application
+### 3. Run app
 
-`./mvnw spring-boot:run`
-
-The API will start at:
-
-`http://localhost:8080`
-
----
-
-# Running Tests
-
-Run all tests:
-
-`./mvnw test`
-
-The project contains:
-
-- service layer unit tests
-- controller layer tests using MockMvc
+```
+./mvnw spring-boot:run
+```
 
 ---
 
-# Project Structure
+## Testing
 
-controller  
-service  
-repository  
-entity  
-dto  
-exception  
-config
+```
+./mvnw test
+```
 
-This follows a standard **layered architecture**:
+Includes:
+
+- service tests
+- controller tests
+- security edge-case tests
+
+---
+
+## API Docs
+
+Swagger UI:
+
+<http://localhost:8080/swagger-ui.html>
+
+---
+
+## Architecture
 
 Controller → Service → Repository → Database
 
----
-
-# Example Request
-
-Create a transaction:
-
-```
-{
-  "userId": "11111111-1111-1111-1111-111111111111",
-  "accountId": "22222222-2222-2222-2222-222222222222",
-  "categoryId": "33333333-3333-3333-3333-333333333333",
-  "description": "Tesco shop",
-  "amount": 45.50,
-  "type": "EXPENSE",
-  "transactionDate": "2026-03-10",
-  "merchant": "Tesco"
-}
-```
+- DTOs for API boundaries
+- services contain business logic
+- repositories handle persistence
 
 ---
 
-# Future Improvements
+## Future Improvements
 
-Planned next steps:
-
-- budget management endpoints
-- dashboard summary queries
-- account management endpoints
-- authentication and user login
-- pagination and filtering
-- Docker based development environment
-
----
+- budget management
+- dashboard reporting (spending insights)
+- account management
+- recurring transactions
+- full role-based access control
 
 # Author
 
