@@ -1,9 +1,14 @@
 package dev.pafsmith.ledgerflow.category.controller;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,5 +65,12 @@ public class CategoryController {
       @PathVariable UUID userId,
       @PathVariable CategoryType type) {
     return categoryService.getCategoriesForUserByType(userId, type);
+  }
+
+  @DeleteMapping("/{categoryId}")
+  public ResponseEntity<Void> deleteCategory(@PathVariable UUID categoryId,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    categoryService.deleteCategory(userDetails.getUsername(), categoryId);
+    return ResponseEntity.noContent().build();
   }
 }

@@ -76,4 +76,19 @@ public class CategoryService {
     response.setUpdatedAt(category.getUpdatedAt());
     return response;
   }
+
+  public void deleteCategory(String email, UUID categoryId) {
+
+    Category category = categoryRepository.findById(categoryId)
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    if (user.getId().equals(category.getUser().getId())) {
+      categoryRepository.deleteById(categoryId);
+    } else {
+      throw new BadRequestException("You do not have permission to delete this category");
+    }
+
+  }
 }
