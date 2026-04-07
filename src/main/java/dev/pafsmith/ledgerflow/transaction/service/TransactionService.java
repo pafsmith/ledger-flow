@@ -50,9 +50,9 @@ public class TransactionService {
     this.categoryRepository = categoryRepository;
   }
 
-  public TransactionResponse createTransaction(CreateTransactionRequest request, String userEmail) {
+  public TransactionResponse createTransaction(CreateTransactionRequest request, String userId) {
 
-    User user = userRepository.findByEmail(userEmail)
+    User user = userRepository.findById(UUID.fromString(userId))
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     Account account = accountRepository.findById(request.getAccountId())
@@ -195,10 +195,11 @@ public class TransactionService {
     return response;
   }
 
-  public TransactionResponse getTransactionById(UUID transactionId, String userEmail) {
+  public TransactionResponse getTransactionById(UUID transactionId, String userId) {
     Transaction transaction = transactionRepository.findById(transactionId)
         .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
-    User user = userRepository.findByEmail(userEmail.toLowerCase())
+
+    User user = userRepository.findById(UUID.fromString(userId))
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     if (!transaction.getUser().getId().equals(user.getId())) {
@@ -246,12 +247,12 @@ public class TransactionService {
         .toList();
   }
 
-  public TransactionResponse updateTransaction(UUID transactionId, UpdateTransactionRequest request, String userEmail) {
+  public TransactionResponse updateTransaction(UUID transactionId, UpdateTransactionRequest request, String userId) {
 
     Transaction transaction = transactionRepository.findById(transactionId)
         .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
-    User user = userRepository.findByEmail(userEmail.toLowerCase())
+    User user = userRepository.findById(UUID.fromString(userId))
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     if (!transaction.getUser().getId().equals(user.getId())) {
@@ -308,11 +309,11 @@ public class TransactionService {
   }
 
   public void deleteTransaction(UUID transactionId,
-      String userEmail) {
+      String userId) {
     Transaction transaction = transactionRepository.findById(transactionId)
         .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
 
-    User user = userRepository.findByEmail(userEmail.toLowerCase())
+    User user = userRepository.findById(UUID.fromString(userId))
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     if (!transaction.getUser().getId().equals(user.getId())) {
@@ -323,13 +324,13 @@ public class TransactionService {
   }
 
   public PagedTransactionResponse getTransactions(
-      String userEmail,
+      String userId,
       TransactionFilterRequest filter,
       int page,
       int size,
       String sortBy,
       String direction) {
-    User user = userRepository.findByEmail(userEmail.toLowerCase())
+    User user = userRepository.findById(UUID.fromString(userId))
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     Sort sort = direction.equals("asc")

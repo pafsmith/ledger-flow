@@ -103,7 +103,7 @@ class TransactionServiceTest {
     request.setTransactionDate(LocalDate.of(2026, 3, 10));
     request.setMerchant("Tesco");
 
-    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
     when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
@@ -112,7 +112,7 @@ class TransactionServiceTest {
       return transaction;
     });
 
-    var response = transactionService.createTransaction(request, "paul@test.com");
+    var response = transactionService.createTransaction(request, userId.toString());
 
     assertThat(response).isNotNull();
     assertThat(response.getDescription()).isEqualTo("Tesco shop");
@@ -137,10 +137,10 @@ class TransactionServiceTest {
     request.setType(TransactionType.TRANSFER);
     request.setTransactionDate(LocalDate.of(2026, 3, 10));
 
-    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
 
-    assertThatThrownBy(() -> transactionService.createTransaction(request, "paul@test.com"))
+    assertThatThrownBy(() -> transactionService.createTransaction(request, userId.toString()))
         .isInstanceOf(BadRequestException.class)
         .hasMessage("Destination account is required for transfers");
 
@@ -159,11 +159,11 @@ class TransactionServiceTest {
     request.setType(TransactionType.EXPENSE);
     request.setTransactionDate(LocalDate.of(2026, 3, 10));
 
-    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
 
-    assertThatThrownBy(() -> transactionService.createTransaction(request, "paul@test.com"))
+    assertThatThrownBy(() -> transactionService.createTransaction(request, userId.toString()))
         .isInstanceOf(BadRequestException.class)
         .hasMessage("Expense transactions must use an expense category");
 
@@ -196,12 +196,12 @@ class TransactionServiceTest {
     request.setNotes("Updated");
 
     when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(existingTransaction));
-    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
     when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    var response = transactionService.updateTransaction(transactionId, request, "paul@test.com");
+    var response = transactionService.updateTransaction(transactionId, request, userId.toString());
 
     assertThat(response.getDescription()).isEqualTo("Updated Tesco shop");
     assertThat(response.getAmount()).isEqualByComparingTo("55.00");
@@ -223,7 +223,7 @@ class TransactionServiceTest {
 
     when(transactionRepository.findById(transactionId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> transactionService.updateTransaction(transactionId, request, "paul@test.com"))
+    assertThatThrownBy(() -> transactionService.updateTransaction(transactionId, request, userId.toString()))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("Transaction not found");
   }
@@ -243,13 +243,13 @@ class TransactionServiceTest {
     transaction.setType(TransactionType.EXPENSE);
     transaction.setTransactionDate(LocalDate.of(2026, 3, 10));
 
-    when(userRepository.findByEmail("paul@test.com")).thenReturn(Optional.of(user));
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(transactionRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class),
         any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(transaction)));
 
     var response = transactionService.getTransactions(
-        "paul@test.com",
+        userId.toString(),
         filter,
         0,
         10,

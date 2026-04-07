@@ -77,12 +77,12 @@ public class CategoryService {
     return response;
   }
 
-  public void deleteCategory(String email, UUID categoryId) {
+  public void deleteCategory(String userId, UUID categoryId) {
 
     Category category = categoryRepository.findById(categoryId)
         .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-    User user = userRepository.findByEmail(email)
+    User user = userRepository.findById(UUID.fromString(userId))
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     if (user.getId().equals(category.getUser().getId())) {
       categoryRepository.deleteById(categoryId);
