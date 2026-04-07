@@ -1,5 +1,7 @@
 package dev.pafsmith.ledgerflow.auth.service;
 
+import java.util.UUID;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -79,8 +81,8 @@ public class AuthService {
     return response;
   }
 
-  public CurrentUserResponse getCurrentUser(String email) {
-    User user = userRepository.findByEmail(email.trim().toLowerCase())
+  public CurrentUserResponse getCurrentUser(String userId) {
+    User user = userRepository.findById(UUID.fromString(userId))
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     CurrentUserResponse response = new CurrentUserResponse();
