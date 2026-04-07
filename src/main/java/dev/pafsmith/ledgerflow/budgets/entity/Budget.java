@@ -27,6 +27,9 @@ public class Budget extends BaseEntity {
   @JoinColumn(name = "category_id", nullable = false)
   private Category category;
 
+  @Column(nullable = false, length = 100)
+  private String name;
+
   @Column(name = "limit_amount", nullable = false, precision = 19, scale = 2)
   private BigDecimal limitAmount;
 
@@ -41,6 +44,14 @@ public class Budget extends BaseEntity {
 
   public User getUser() {
     return user;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public void setUser(User user) {
