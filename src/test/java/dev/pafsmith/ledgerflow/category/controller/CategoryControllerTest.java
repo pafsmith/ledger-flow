@@ -18,6 +18,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -35,7 +36,10 @@ import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 @WebMvcTest(CategoryController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser(username = "11111111-1111-1111-1111-111111111111")
 class CategoryControllerTest extends BaseControllerTest {
+
+  private static final UUID AUTH_USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
   @Autowired
   private MockMvc mockMvc;
@@ -113,7 +117,7 @@ class CategoryControllerTest extends BaseControllerTest {
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(categoryService.getCategoryById(categoryId)).thenReturn(response);
+    when(categoryService.getCategoryById(AUTH_USER_ID, categoryId)).thenReturn(response);
 
     mockMvc.perform(get("/api/categories/{categoryId}", categoryId))
         .andExpect(status().isOk())
@@ -197,7 +201,7 @@ class CategoryControllerTest extends BaseControllerTest {
   void getCategoryById_shouldReturnNotFound_whenCategoryDoesNotExist() throws Exception {
     UUID categoryId = UUID.randomUUID();
 
-    when(categoryService.getCategoryById(categoryId))
+    when(categoryService.getCategoryById(AUTH_USER_ID, categoryId))
         .thenThrow(new ResourceNotFoundException("Category not found"));
 
     mockMvc.perform(get("/api/categories/{categoryId}", categoryId))

@@ -5,6 +5,7 @@ import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
 import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
+import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
@@ -106,5 +107,44 @@ class CategoryServiceTest {
         .hasMessage("Category with that name already exists for this user");
 
     verify(categoryRepository, never()).save(any(Category.class));
+  }
+
+  @Test
+  void getCategoryById_shouldReturnCategoryWhenOwnedByUser() {
+    UUID categoryId = UUID.randomUUID();
+
+    Category category = new Category();
+    category.setId(categoryId);
+    category.setUser(user);
+    category.setName("Groceries");
+    category.setType(CategoryType.EXPENSE);
+    category.setSystemDefined(false);
+
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+    var response = categoryService.getCategoryById(userId, categoryId);
+
+    assertThat(response.getId()).isEqualTo(categoryId);
+    assertThat(response.getUserId()).isEqualTo(userId);
+    assertThat(response.getName()).isEqualTo("Groceries");
+  }
+
+  @Test
+  void getCategoryById_shouldThrowForbiddenWhenCategoryNotOwnedByUser() {
+    UUID categoryId = UUID.randomUUID();
+    UUID otherUserId = UUID.randomUUID();
+
+    User otherUser = new User();
+    otherUser.setId(otherUserId);
+
+    Category category = new Category();
+    category.setId(categoryId);
+    category.setUser(otherUser);
+
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+    assertThatThrownBy(() -> categoryService.getCategoryById(userId, categoryId))
+        .isInstanceOf(ForbiddenException.class)
+        .hasMessage("Category does not belong to user");
   }
 }
