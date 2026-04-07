@@ -13,4 +13,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
   List<Category> findByUserIdAndType(UUID userId, CategoryType type);
 
   boolean existsByUserIdAndNameIgnoreCase(UUID userId, String name);
+
+  void deleteById(UUID id);
 }
