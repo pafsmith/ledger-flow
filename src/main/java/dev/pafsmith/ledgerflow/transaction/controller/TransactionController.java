@@ -1,12 +1,13 @@
 package dev.pafsmith.ledgerflow.transaction.controller;
 
-import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,8 +51,8 @@ public class TransactionController {
       @ApiResponse(responseCode = "404", description = "Related resource not found")
   })
   public TransactionResponse createTransaction(@Valid @RequestBody CreateTransactionRequest request,
-      Principal principal) {
-    return transactionService.createTransaction(request, principal.getName());
+      @AuthenticationPrincipal UserDetails userDetails) {
+    return transactionService.createTransaction(request, userDetails.getUsername());
   }
 
   @GetMapping
@@ -61,9 +62,9 @@ public class TransactionController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(defaultValue = "transactionDate") String sortBy,
       @RequestParam(defaultValue = "desc") String direction,
-      Principal principal) {
+      @AuthenticationPrincipal UserDetails userDetails) {
     return transactionService.getTransactions(
-        principal.getName(),
+        userDetails.getUsername(),
         filter,
         page,
         size,
@@ -74,8 +75,8 @@ public class TransactionController {
   @GetMapping("/{transactionId}")
   @Operation(summary = "Get transaction by id")
   public TransactionResponse getTransactionById(@PathVariable UUID transactionId,
-      Principal principal) {
-    return transactionService.getTransactionById(transactionId, principal.getName());
+      @AuthenticationPrincipal UserDetails userDetails) {
+    return transactionService.getTransactionById(transactionId, userDetails.getUsername());
   }
 
   @GetMapping("/user/{userId}")
@@ -119,15 +120,15 @@ public class TransactionController {
   public TransactionResponse updateTransaction(
       @PathVariable UUID transactionId,
       @Valid @RequestBody UpdateTransactionRequest request,
-      Principal principal) {
-    return transactionService.updateTransaction(transactionId, request, principal.getName());
+      @AuthenticationPrincipal UserDetails userDetails) {
+    return transactionService.updateTransaction(transactionId, request, userDetails.getUsername());
   }
 
   @DeleteMapping("/{transactionId}")
   @Operation(summary = "Delete a transaction")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteTransaction(@PathVariable UUID transactionId,
-      Principal principal) {
-    transactionService.deleteTransaction(transactionId, principal.getName());
+      @AuthenticationPrincipal UserDetails userDetails) {
+    transactionService.deleteTransaction(transactionId, userDetails.getUsername());
   }
 }
