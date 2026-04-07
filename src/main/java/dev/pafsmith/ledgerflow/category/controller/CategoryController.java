@@ -47,6 +47,12 @@ public class CategoryController {
     return categoryService.createCategory(request);
   }
 
+  @GetMapping()
+  @Operation(summary = "Get all categories for user")
+  public List<CategoryResponse> getCategories(@AuthenticationPrincipal UserDetails userDetails) {
+    return categoryService.getCategoriesForUser(UUID.fromString(userDetails.getUsername()));
+  }
+
   @GetMapping("/{categoryId}")
   @Operation(summary = "Get a category by id")
   public CategoryResponse getCategoryById(@PathVariable UUID categoryId) {
