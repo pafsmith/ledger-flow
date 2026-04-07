@@ -26,8 +26,8 @@ public class CategoryService {
     this.userRepository = userRepository;
   }
 
-  public CategoryResponse createCategory(CreateCategoryRequest request) {
-    User user = userRepository.findById(request.getUserId())
+  public CategoryResponse createCategory(UUID userId, CreateCategoryRequest request) {
+    User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     if (categoryRepository.existsByUserIdAndNameIgnoreCase(user.getId(), request.getName())) {

@@ -43,8 +43,10 @@ public class CategoryController {
       @ApiResponse(responseCode = "400", description = "Validation failed"),
       @ApiResponse(responseCode = "404", description = "Related resource not found")
   })
-  public CategoryResponse createCategory(@Valid @RequestBody CreateCategoryRequest request) {
-    return categoryService.createCategory(request);
+  public CategoryResponse createCategory(@Valid @RequestBody CreateCategoryRequest request,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+    return categoryService.createCategory(userId, request);
   }
 
   @GetMapping()
