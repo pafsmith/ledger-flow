@@ -1,0 +1,130 @@
+package dev.pafsmith.ledgerflow.budgets.controller;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import dev.pafsmith.ledgerflow.budgets.dto.BudgetResponse;
+import dev.pafsmith.ledgerflow.budgets.dto.CreateBudgetRequest;
+import dev.pafsmith.ledgerflow.budgets.service.BudgetService;
+import dev.pafsmith.ledgerflow.common.BaseControllerTest;
+import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
+import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
+
+@WebMvcTest(BudgetController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
+@WithMockUser(username = "11111111-1111-1111-1111-111111111111")
+class BudgetControllerTest extends BaseControllerTest {
+
+  private static final UUID AUTH_USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+
+  @Autowired
+  private MockMvc mockMvc;
+
+  private final ObjectMapper objectMapper = new ObjectMapper()
+      .registerModule(new JavaTimeModule());
+
+  @MockitoBean
+  private BudgetService budgetService;
+
+  @Test
+  @DisplayName("POST /api/budgets returns 201 when request is valid")
+  void createBudget_shouldReturnCreated() throws Exception {
+    UUID budgetId = UUID.randomUUID();
+    UUID categoryId = UUID.randomUUID();
+
+    CreateBudgetRequest request = new CreateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Groceries");
+    request.setLimitAmount(new BigDecimal("500.00"));
+    request.setYear(2026);
+    request.setMonth(4);
+
+    BudgetResponse response = new BudgetResponse();
+    response.setId(budgetId);
+    response.setUserId(AUTH_USER_ID);
+    response.setCategoryId(categoryId);
+    response.setName("Groceries");
+    response.setYear(2026);
+    response.setMonth(4);
+    response.setCreatedAt(Instant.now());
+    response.setUpdatedAt(Instant.now());
+
+    when(budgetService.createBudget(any(CreateBudgetRequest.class), eq(AUTH_USER_ID))).thenReturn(response);
+
+    mockMvc.perform(post("/api/budgets")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(budgetId.toString()))
+        .andExpect(jsonPath("$.userId").value(AUTH_USER_ID.toString()))
+        .andExpect(jsonPath("$.categoryId").value(categoryId.toString()))
+        .andExpect(jsonPath("$.name").value("Groceries"))
+        .andExpect(jsonPath("$.year").value(2026))
+        .andExpect(jsonPath("$.month").value(4));
+  }
+
+  @Test
+  @DisplayName("POST /api/budgets returns 400 when request is invalid")
+  void createBudget_shouldReturnBadRequest_whenValidationFails() throws Exception {
+    String invalidJson = "{}";
+
+    mockMvc.perform(post("/api/budgets")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(invalidJson))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Validation failed"))
+        .andExpect(jsonPath("$.validationErrors.categoryId").exists())
+        .andExpect(jsonPath("$.validationErrors.name").exists())
+        .andExpect(jsonPath("$.validationErrors.limitAmount").exists())
+        .andExpect(jsonPath("$.validationErrors.year").exists())
+        .andExpect(jsonPath("$.validationErrors.month").exists());
+  }
+
+  @Test
+  @DisplayName("POST /api/budgets returns 404 when category is not found")
+  void createBudget_shouldReturnNotFound_whenCategoryDoesNotExist() throws Exception {
+    UUID categoryId = UUID.randomUUID();
+
+    CreateBudgetRequest request = new CreateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Groceries");
+    request.setLimitAmount(new BigDecimal("500.00"));
+    request.setYear(2026);
+    request.setMonth(4);
+
+    when(budgetService.createBudget(any(CreateBudgetRequest.class), eq(AUTH_USER_ID)))
+        .thenThrow(new ResourceNotFoundException("Category not found"));
+
+    mockMvc.perform(post("/api/budgets")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.status").value(404))
+        .andExpect(jsonPath("$.error").value("Not Found"))
+        .andExpect(jsonPath("$.message").value("Category not found"))
+        .andExpect(jsonPath("$.path").value("/api/budgets"));
+  }
+}
