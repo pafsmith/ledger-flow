@@ -54,7 +54,6 @@ class CategoryServiceTest {
   @Test
   void createCategory_shouldSaveCategorySuccessfully() {
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
@@ -66,7 +65,7 @@ class CategoryServiceTest {
       return category;
     });
 
-    var response = categoryService.createCategory(request);
+    var response = categoryService.createCategory(userId, request);
 
     assertThat(response).isNotNull();
     assertThat(response.getName()).isEqualTo("Groceries");
@@ -79,13 +78,12 @@ class CategoryServiceTest {
   @Test
   void createCategory_shouldThrowWhenUserNotFound() {
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> categoryService.createCategory(request))
+    assertThatThrownBy(() -> categoryService.createCategory(userId, request))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("User not found");
 
@@ -95,14 +93,13 @@ class CategoryServiceTest {
   @Test
   void createCategory_shouldThrowWhenDuplicateCategoryExists() {
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(categoryRepository.existsByUserIdAndNameIgnoreCase(userId, "Groceries")).thenReturn(true);
 
-    assertThatThrownBy(() -> categoryService.createCategory(request))
+    assertThatThrownBy(() -> categoryService.createCategory(userId, request))
         .isInstanceOf(BadRequestException.class)
         .hasMessage("Category with that name already exists for this user");
 

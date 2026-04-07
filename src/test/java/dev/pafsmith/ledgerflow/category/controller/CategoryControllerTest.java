@@ -1,6 +1,7 @@
 package dev.pafsmith.ledgerflow.category.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,24 +54,22 @@ class CategoryControllerTest extends BaseControllerTest {
   @Test
   @DisplayName("POST /api/categories returns 201 when request is valid")
   void createCategory_shouldReturnCreated() throws Exception {
-    UUID userId = UUID.randomUUID();
     UUID categoryId = UUID.randomUUID();
 
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
     CategoryResponse response = new CategoryResponse();
     response.setId(categoryId);
-    response.setUserId(userId);
+    response.setUserId(AUTH_USER_ID);
     response.setName("Groceries");
     response.setType(CategoryType.EXPENSE);
     response.setSystemDefined(false);
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(categoryService.createCategory(any(CreateCategoryRequest.class))).thenReturn(response);
+    when(categoryService.createCategory(eq(AUTH_USER_ID), any(CreateCategoryRequest.class))).thenReturn(response);
 
     mockMvc.perform(post("/api/categories")
         .contentType(MediaType.APPLICATION_JSON)
@@ -86,7 +85,6 @@ class CategoryControllerTest extends BaseControllerTest {
   void createCategory_shouldReturnBadRequest_whenValidationFails() throws Exception {
     String invalidJson = """
         {
-          "userId": null,
           "name": "",
           "type": null
         }
@@ -97,7 +95,6 @@ class CategoryControllerTest extends BaseControllerTest {
         .content(invalidJson))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("Validation failed"))
-        .andExpect(jsonPath("$.validationErrors.userId").value("User id is required"))
         .andExpect(jsonPath("$.validationErrors.name").value("Category name is required"))
         .andExpect(jsonPath("$.validationErrors.type").value("Category type is required"));
   }
