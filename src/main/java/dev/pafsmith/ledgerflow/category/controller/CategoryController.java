@@ -43,14 +43,25 @@ public class CategoryController {
       @ApiResponse(responseCode = "400", description = "Validation failed"),
       @ApiResponse(responseCode = "404", description = "Related resource not found")
   })
-  public CategoryResponse createCategory(@Valid @RequestBody CreateCategoryRequest request) {
-    return categoryService.createCategory(request);
+  public CategoryResponse createCategory(@Valid @RequestBody CreateCategoryRequest request,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+    return categoryService.createCategory(userId, request);
+  }
+
+  @GetMapping()
+  @Operation(summary = "Get all categories for user")
+  public List<CategoryResponse> getCategories(@AuthenticationPrincipal UserDetails userDetails) {
+    return categoryService.getCategoriesForUser(UUID.fromString(userDetails.getUsername()));
   }
 
   @GetMapping("/{categoryId}")
   @Operation(summary = "Get a category by id")
-  public CategoryResponse getCategoryById(@PathVariable UUID categoryId) {
-    return categoryService.getCategoryById(categoryId);
+  public CategoryResponse getCategoryById(@AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable UUID categoryId) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+
+    return categoryService.getCategoryById(userId, categoryId);
   }
 
   @GetMapping("/user/{userId}")

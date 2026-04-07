@@ -1,6 +1,7 @@
 package dev.pafsmith.ledgerflow.category.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,6 +19,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -35,7 +37,10 @@ import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 @WebMvcTest(CategoryController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser(username = "11111111-1111-1111-1111-111111111111")
 class CategoryControllerTest extends BaseControllerTest {
+
+  private static final UUID AUTH_USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
   @Autowired
   private MockMvc mockMvc;
@@ -49,24 +54,22 @@ class CategoryControllerTest extends BaseControllerTest {
   @Test
   @DisplayName("POST /api/categories returns 201 when request is valid")
   void createCategory_shouldReturnCreated() throws Exception {
-    UUID userId = UUID.randomUUID();
     UUID categoryId = UUID.randomUUID();
 
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
     CategoryResponse response = new CategoryResponse();
     response.setId(categoryId);
-    response.setUserId(userId);
+    response.setUserId(AUTH_USER_ID);
     response.setName("Groceries");
     response.setType(CategoryType.EXPENSE);
     response.setSystemDefined(false);
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(categoryService.createCategory(any(CreateCategoryRequest.class))).thenReturn(response);
+    when(categoryService.createCategory(eq(AUTH_USER_ID), any(CreateCategoryRequest.class))).thenReturn(response);
 
     mockMvc.perform(post("/api/categories")
         .contentType(MediaType.APPLICATION_JSON)
@@ -82,7 +85,6 @@ class CategoryControllerTest extends BaseControllerTest {
   void createCategory_shouldReturnBadRequest_whenValidationFails() throws Exception {
     String invalidJson = """
         {
-          "userId": null,
           "name": "",
           "type": null
         }
@@ -93,7 +95,6 @@ class CategoryControllerTest extends BaseControllerTest {
         .content(invalidJson))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("Validation failed"))
-        .andExpect(jsonPath("$.validationErrors.userId").value("User id is required"))
         .andExpect(jsonPath("$.validationErrors.name").value("Category name is required"))
         .andExpect(jsonPath("$.validationErrors.type").value("Category type is required"));
   }
@@ -113,7 +114,7 @@ class CategoryControllerTest extends BaseControllerTest {
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(categoryService.getCategoryById(categoryId)).thenReturn(response);
+    when(categoryService.getCategoryById(AUTH_USER_ID, categoryId)).thenReturn(response);
 
     mockMvc.perform(get("/api/categories/{categoryId}", categoryId))
         .andExpect(status().isOk())
@@ -197,7 +198,7 @@ class CategoryControllerTest extends BaseControllerTest {
   void getCategoryById_shouldReturnNotFound_whenCategoryDoesNotExist() throws Exception {
     UUID categoryId = UUID.randomUUID();
 
-    when(categoryService.getCategoryById(categoryId))
+    when(categoryService.getCategoryById(AUTH_USER_ID, categoryId))
         .thenThrow(new ResourceNotFoundException("Category not found"));
 
     mockMvc.perform(get("/api/categories/{categoryId}", categoryId))

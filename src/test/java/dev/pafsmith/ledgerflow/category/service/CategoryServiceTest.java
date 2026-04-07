@@ -5,6 +5,7 @@ import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
 import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
+import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
@@ -53,7 +54,6 @@ class CategoryServiceTest {
   @Test
   void createCategory_shouldSaveCategorySuccessfully() {
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
@@ -65,7 +65,7 @@ class CategoryServiceTest {
       return category;
     });
 
-    var response = categoryService.createCategory(request);
+    var response = categoryService.createCategory(userId, request);
 
     assertThat(response).isNotNull();
     assertThat(response.getName()).isEqualTo("Groceries");
@@ -78,13 +78,12 @@ class CategoryServiceTest {
   @Test
   void createCategory_shouldThrowWhenUserNotFound() {
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> categoryService.createCategory(request))
+    assertThatThrownBy(() -> categoryService.createCategory(userId, request))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessage("User not found");
 
@@ -94,17 +93,55 @@ class CategoryServiceTest {
   @Test
   void createCategory_shouldThrowWhenDuplicateCategoryExists() {
     CreateCategoryRequest request = new CreateCategoryRequest();
-    request.setUserId(userId);
     request.setName("Groceries");
     request.setType(CategoryType.EXPENSE);
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(categoryRepository.existsByUserIdAndNameIgnoreCase(userId, "Groceries")).thenReturn(true);
 
-    assertThatThrownBy(() -> categoryService.createCategory(request))
+    assertThatThrownBy(() -> categoryService.createCategory(userId, request))
         .isInstanceOf(BadRequestException.class)
         .hasMessage("Category with that name already exists for this user");
 
     verify(categoryRepository, never()).save(any(Category.class));
+  }
+
+  @Test
+  void getCategoryById_shouldReturnCategoryWhenOwnedByUser() {
+    UUID categoryId = UUID.randomUUID();
+
+    Category category = new Category();
+    category.setId(categoryId);
+    category.setUser(user);
+    category.setName("Groceries");
+    category.setType(CategoryType.EXPENSE);
+    category.setSystemDefined(false);
+
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+    var response = categoryService.getCategoryById(userId, categoryId);
+
+    assertThat(response.getId()).isEqualTo(categoryId);
+    assertThat(response.getUserId()).isEqualTo(userId);
+    assertThat(response.getName()).isEqualTo("Groceries");
+  }
+
+  @Test
+  void getCategoryById_shouldThrowForbiddenWhenCategoryNotOwnedByUser() {
+    UUID categoryId = UUID.randomUUID();
+    UUID otherUserId = UUID.randomUUID();
+
+    User otherUser = new User();
+    otherUser.setId(otherUserId);
+
+    Category category = new Category();
+    category.setId(categoryId);
+    category.setUser(otherUser);
+
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+    assertThatThrownBy(() -> categoryService.getCategoryById(userId, categoryId))
+        .isInstanceOf(ForbiddenException.class)
+        .hasMessage("Category does not belong to user");
   }
 }
