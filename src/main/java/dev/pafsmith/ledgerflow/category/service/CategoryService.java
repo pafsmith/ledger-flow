@@ -6,6 +6,7 @@ import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
 import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
+import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
@@ -44,11 +45,15 @@ public class CategoryService {
     return mapToResponse(savedCategory);
   }
 
-  public CategoryResponse getCategoryById(UUID categoryId) {
+  public CategoryResponse getCategoryById(UUID userId, UUID categoryId) {
     Category category = categoryRepository.findById(categoryId)
         .orElseThrow(() -> new ResourceNotFoundException("Category Not found"));
 
-    return mapToResponse(category);
+    if (category.getUser().getId().equals(userId)) {
+      return mapToResponse(category);
+    } else {
+      throw new ForbiddenException("Category does not belong to user");
+    }
   }
 
   public List<CategoryResponse> getCategoriesForUser(UUID userId) {

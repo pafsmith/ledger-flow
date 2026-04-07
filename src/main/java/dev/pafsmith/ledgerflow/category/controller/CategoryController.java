@@ -55,8 +55,11 @@ public class CategoryController {
 
   @GetMapping("/{categoryId}")
   @Operation(summary = "Get a category by id")
-  public CategoryResponse getCategoryById(@PathVariable UUID categoryId) {
-    return categoryService.getCategoryById(categoryId);
+  public CategoryResponse getCategoryById(@AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable UUID categoryId) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+
+    return categoryService.getCategoryById(userId, categoryId);
   }
 
   @GetMapping("/user/{userId}")
