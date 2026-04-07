@@ -2,7 +2,6 @@ package dev.pafsmith.ledgerflow.auth.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -95,16 +94,17 @@ class AuthControllerTest extends BaseControllerTest {
   @Test
   @DisplayName("GET /api/auth/me returns current user when authenticated")
   void getCurrentUser_shouldReturnCurrentUser() throws Exception {
+    String userId = "11111111-1111-1111-1111-111111111111";
     CurrentUserResponse response = new CurrentUserResponse();
-    response.setUserId(UUID.randomUUID());
+    response.setUserId(UUID.fromString(userId));
     response.setFirstName("Paul");
     response.setLastName("Smith");
     response.setEmail("paul@test.com");
 
-    when(authService.getCurrentUser("paul@test.com")).thenReturn(response);
+    when(authService.getCurrentUser(userId)).thenReturn(response);
 
     mockMvc.perform(get("/api/auth/me")
-        .principal(() -> "paul@test.com"))
+        .principal(() -> userId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.email").value("paul@test.com"))
         .andExpect(jsonPath("$.firstName").value("Paul"))

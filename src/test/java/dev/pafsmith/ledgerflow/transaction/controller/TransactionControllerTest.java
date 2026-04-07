@@ -25,6 +25,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -45,7 +46,10 @@ import dev.pafsmith.ledgerflow.transaction.service.TransactionService;
 @WebMvcTest(TransactionController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
+@WithMockUser(username = "11111111-1111-1111-1111-111111111111")
 class TransactionControllerTest extends BaseControllerTest {
+
+  private static final String AUTH_USER_ID = "11111111-1111-1111-1111-111111111111";
 
   @Autowired
   private MockMvc mockMvc;
@@ -90,7 +94,6 @@ class TransactionControllerTest extends BaseControllerTest {
         .thenReturn(response);
 
     mockMvc.perform(post("/api/transactions")
-        .principal(() -> "paul@test.com")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -125,10 +128,9 @@ class TransactionControllerTest extends BaseControllerTest {
   void deleteTransaction_shouldReturnNoContent() throws Exception {
     UUID transactionId = UUID.randomUUID();
 
-    doNothing().when(transactionService).deleteTransaction(transactionId, "paul@test.com");
+    doNothing().when(transactionService).deleteTransaction(transactionId, AUTH_USER_ID);
 
-    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId)
-        .principal(() -> "paul@test.com"))
+    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId))
         .andExpect(status().isNoContent());
   }
 
@@ -139,10 +141,9 @@ class TransactionControllerTest extends BaseControllerTest {
 
     doThrow(new ResourceNotFoundException("Transaction not found"))
         .when(transactionService)
-        .deleteTransaction(transactionId, "paul@test.com");
+        .deleteTransaction(transactionId, AUTH_USER_ID);
 
-    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId)
-        .principal(() -> "paul@test.com"))
+    mockMvc.perform(delete("/api/transactions/{transactionId}", transactionId))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.status").value(404))
         .andExpect(jsonPath("$.error").value("Not Found"))
@@ -185,7 +186,6 @@ class TransactionControllerTest extends BaseControllerTest {
         .thenReturn(response);
 
     mockMvc.perform(put("/api/transactions/{transactionId}", transactionId)
-        .principal(() -> "paul@test.com")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -209,7 +209,6 @@ class TransactionControllerTest extends BaseControllerTest {
         """;
 
     mockMvc.perform(put("/api/transactions/{transactionId}", transactionId)
-        .principal(() -> "paul@test.com")
         .contentType(MediaType.APPLICATION_JSON)
         .content(invalidJson))
         .andExpect(status().isBadRequest())
@@ -249,7 +248,6 @@ class TransactionControllerTest extends BaseControllerTest {
         eq("desc"))).thenReturn(response);
 
     mockMvc.perform(get("/api/transactions")
-        .principal(() -> "paul@test.com")
         .param("page", "0")
         .param("size", "10")
         .param("sortBy", "transactionDate")
