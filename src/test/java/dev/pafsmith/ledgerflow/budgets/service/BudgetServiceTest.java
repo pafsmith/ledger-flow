@@ -76,7 +76,7 @@ class BudgetServiceTest {
   void createBudget_shouldSaveBudgetSuccessfully() {
     CreateBudgetRequest request = new CreateBudgetRequest();
     request.setCategoryId(categoryId);
-    request.setName("Groceries");
+    request.setName("  Groceries  ");
     request.setLimitAmount(new BigDecimal("500.00"));
     request.setYear(2026);
     request.setMonth(4);
@@ -116,6 +116,27 @@ class BudgetServiceTest {
     assertThat(savedBudget.getLimitAmount()).isEqualByComparingTo("500.00");
     assertThat(savedBudget.getYear()).isEqualTo(2026);
     assertThat(savedBudget.getMonth()).isEqualTo(4);
+  }
+
+  @Test
+  void createBudget_shouldThrowWhenDuplicateBudgetExists() {
+    CreateBudgetRequest request = new CreateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Groceries");
+    request.setLimitAmount(new BigDecimal("500.00"));
+    request.setYear(2026);
+    request.setMonth(4);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+    when(budgetRepository.existsByUserIdAndCategoryIdAndYearAndMonth(userId, categoryId, 2026, 4))
+        .thenReturn(true);
+
+    assertThatThrownBy(() -> budgetService.createBudget(request, userId))
+        .isInstanceOf(BadRequestException.class)
+        .hasMessage("Budget already exists for this category and period");
+
+    verify(budgetRepository, never()).save(any(Budget.class));
   }
 
   @Test
