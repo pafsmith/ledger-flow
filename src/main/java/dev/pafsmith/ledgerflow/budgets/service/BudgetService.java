@@ -139,6 +139,20 @@ public class BudgetService {
     return mapToResponse(updatedBudget);
   }
 
+  public void deleteBudget(UUID budgetId, UUID userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Budget budget = budgetRepository.findById(budgetId)
+        .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
+
+    if (!budget.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Budget does not belong to user");
+    }
+
+    budgetRepository.delete(budget);
+  }
+
   private BudgetResponse mapToResponse(Budget budget) {
     BudgetResponse response = new BudgetResponse();
     response.setId(budget.getId());

@@ -72,4 +72,15 @@ public class BudgetController {
     return budgetService.updateBudget(budgetId, request, userId);
   }
 
+  @DeleteMapping("/{budgetId}")
+  @Operation(summary = "Delete a budget", description = "Deletes a budget by id", responses = {
+      @ApiResponse(responseCode = "204", description = "Budget deleted"),
+      @ApiResponse(responseCode = "403", description = "Forbidden"),
+      @ApiResponse(responseCode = "404", description = "Resource not found")
+  })
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteBudget(@PathVariable UUID budgetId, @AuthenticationPrincipal UserDetails userDetails) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+    budgetService.deleteBudget(budgetId, userId);
+  }
 }
