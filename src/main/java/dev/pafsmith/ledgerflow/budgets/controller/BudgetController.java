@@ -1,10 +1,12 @@
 package dev.pafsmith.ledgerflow.budgets.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,4 +44,10 @@ public class BudgetController {
     return budgetService.createBudget(request, userId);
   }
 
+  @GetMapping
+  @Operation(summary = "Get all budgets", description = "Gets all budgets for the user")
+  public List<BudgetResponse> getBudgets(@AuthenticationPrincipal UserDetails userDetails) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+    return budgetService.getBudgetsForUser(userId);
+  }
 }

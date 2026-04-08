@@ -32,8 +32,12 @@ public class BudgetService {
     this.userRepository = userRepository;
   }
 
-  public List<Budget> getBudgetsForUser(UUID userId) {
-    return budgetRepository.findByUserId(userId);
+  public List<BudgetResponse> getBudgetsForUser(UUID userId) {
+    return budgetRepository
+        .findByUserId(userId)
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
   }
 
   public List<Budget> getBudgetsForUserForMonth(UUID userId, Integer year, Integer month) {
@@ -78,6 +82,7 @@ public class BudgetService {
     response.setYear(budget.getYear());
     response.setMonth(budget.getMonth());
     response.setName(budget.getName());
+    response.setLimitAmount(budget.getLimitAmount());
     response.setCreatedAt(budget.getCreatedAt());
     response.setUpdatedAt(budget.getUpdatedAt());
     return response;

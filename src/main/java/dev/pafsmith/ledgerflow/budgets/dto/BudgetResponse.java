@@ -14,6 +14,7 @@ public class BudgetResponse {
   private Integer year;
   private Integer month;
   private String name;
+  private java.math.BigDecimal limitAmount;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -82,6 +83,14 @@ public class BudgetResponse {
 
   public void setCategoryId(UUID categoryId) {
     this.categoryId = categoryId;
+  }
+
+  public java.math.BigDecimal getLimitAmount() {
+    return limitAmount;
+  }
+
+  public void setLimitAmount(java.math.BigDecimal limitAmount) {
+    this.limitAmount = limitAmount;
   }
 
 }
