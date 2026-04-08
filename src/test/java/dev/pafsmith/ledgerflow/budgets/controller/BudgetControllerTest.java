@@ -2,7 +2,11 @@ package dev.pafsmith.ledgerflow.budgets.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,6 +35,7 @@ import dev.pafsmith.ledgerflow.budgets.dto.CreateBudgetRequest;
 import dev.pafsmith.ledgerflow.budgets.dto.UpdateBudgetRequest;
 import dev.pafsmith.ledgerflow.budgets.service.BudgetService;
 import dev.pafsmith.ledgerflow.common.BaseControllerTest;
+import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.GlobalExceptionHandler;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 
@@ -210,6 +215,53 @@ class BudgetControllerTest extends BaseControllerTest {
         .andExpect(jsonPath("$.status").value(404))
         .andExpect(jsonPath("$.error").value("Not Found"))
         .andExpect(jsonPath("$.message").value("Budget not found"))
+        .andExpect(jsonPath("$.path").value("/api/budgets/" + budgetId));
+  }
+
+  @Test
+  @DisplayName("DELETE /api/budgets/{budgetId} returns 204 when budget exists")
+  void deleteBudget_shouldReturnNoContent() throws Exception {
+    UUID budgetId = UUID.randomUUID();
+
+    doNothing().when(budgetService).deleteBudget(budgetId, AUTH_USER_ID);
+
+    mockMvc.perform(delete("/api/budgets/{budgetId}", budgetId))
+        .andExpect(status().isNoContent());
+
+    verify(budgetService).deleteBudget(budgetId, AUTH_USER_ID);
+  }
+
+  @Test
+  @DisplayName("DELETE /api/budgets/{budgetId} returns 404 when budget does not exist")
+  void deleteBudget_shouldReturnNotFound_whenBudgetDoesNotExist() throws Exception {
+    UUID budgetId = UUID.randomUUID();
+
+    doThrow(new ResourceNotFoundException("Budget not found"))
+        .when(budgetService)
+        .deleteBudget(budgetId, AUTH_USER_ID);
+
+    mockMvc.perform(delete("/api/budgets/{budgetId}", budgetId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.status").value(404))
+        .andExpect(jsonPath("$.error").value("Not Found"))
+        .andExpect(jsonPath("$.message").value("Budget not found"))
+        .andExpect(jsonPath("$.path").value("/api/budgets/" + budgetId));
+  }
+
+  @Test
+  @DisplayName("DELETE /api/budgets/{budgetId} returns 403 when budget belongs to another user")
+  void deleteBudget_shouldReturnForbidden_whenBudgetDoesNotBelongToUser() throws Exception {
+    UUID budgetId = UUID.randomUUID();
+
+    doThrow(new ForbiddenException("Budget does not belong to user"))
+        .when(budgetService)
+        .deleteBudget(budgetId, AUTH_USER_ID);
+
+    mockMvc.perform(delete("/api/budgets/{budgetId}", budgetId))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.status").value(403))
+        .andExpect(jsonPath("$.error").value("Forbidden"))
+        .andExpect(jsonPath("$.message").value("Budget does not belong to user"))
         .andExpect(jsonPath("$.path").value("/api/budgets/" + budgetId));
   }
 }

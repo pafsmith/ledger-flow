@@ -465,6 +465,70 @@ class BudgetServiceTest {
     verify(budgetRepository, never()).save(any(Budget.class));
   }
 
+  @Test
+  void deleteBudget_shouldDeleteBudgetSuccessfully() {
+    UUID budgetId = UUID.randomUUID();
+
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+
+    budgetService.deleteBudget(budgetId, userId);
+
+    verify(budgetRepository).delete(budget);
+  }
+
+  @Test
+  void deleteBudget_shouldThrowWhenUserNotFound() {
+    UUID budgetId = UUID.randomUUID();
+
+    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> budgetService.deleteBudget(budgetId, userId))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("User not found");
+
+    verify(budgetRepository, never()).findById(any(UUID.class));
+    verify(budgetRepository, never()).delete(any(Budget.class));
+  }
+
+  @Test
+  void deleteBudget_shouldThrowWhenBudgetNotFound() {
+    UUID budgetId = UUID.randomUUID();
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> budgetService.deleteBudget(budgetId, userId))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("Budget not found");
+
+    verify(budgetRepository, never()).delete(any(Budget.class));
+  }
+
+  @Test
+  void deleteBudget_shouldThrowForbiddenWhenBudgetNotOwnedByUser() {
+    UUID budgetId = UUID.randomUUID();
+
+    User otherUser = new User();
+    otherUser.setId(UUID.randomUUID());
+
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+    budget.setUser(otherUser);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+
+    assertThatThrownBy(() -> budgetService.deleteBudget(budgetId, userId))
+        .isInstanceOf(ForbiddenException.class)
+        .hasMessage("Budget does not belong to user");
+
+    verify(budgetRepository, never()).delete(any(Budget.class));
+  }
+
   private Budget createBudget(int year, int month) {
     Budget budget = new Budget();
     budget.setId(UUID.randomUUID());
