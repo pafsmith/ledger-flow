@@ -172,29 +172,36 @@ POST /api/transactions
 
 ## Running Locally
 
-### 1. Start PostgreSQL
+### 1. Create your environment file
 
 ```
-docker run -d \
- --name ledgerflow-postgres \
- -p 5432:5432 \
- -e POSTGRES_DB=ledgerflow \
- -e POSTGRES_USER=postgres \
- -e POSTGRES_PASSWORD=postgres \
- postgres:15
+cp .env.example .env
 ```
 
-### 2. Set environment variables
+### 2. Start app + postgres with Docker Compose
 
 ```
-export JWT_SECRET=your-secure-secret-key
-export JWT_EXPIRATION=3600000
+docker compose up --build
 ```
 
-### 3. Run app
+The API is available at:
 
 ```
-./mvnw spring-boot:run
+http://localhost:8080
+```
+
+Swagger UI:
+
+``` 
+http://localhost:8080/swagger-ui.html
+```
+
+### 3. (Optional) Run app on host instead of Docker
+
+If you run Spring Boot directly, override `DB_URL` for localhost:
+
+```
+DB_URL=jdbc:postgresql://localhost:5433/ledgerflow ./mvnw spring-boot:run
 ```
 
 ---
