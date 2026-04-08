@@ -8,8 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -78,6 +80,34 @@ public class GlobalExceptionHandler {
     response.put("validationErrors", validationErrors);
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ApiErrorResponse> handleMissingServletRequestParameter(
+      MissingServletRequestParameterException ex,
+      HttpServletRequest request) {
+    ApiErrorResponse error = new ApiErrorResponse(
+        Instant.now(),
+        HttpStatus.BAD_REQUEST.value(),
+        HttpStatus.BAD_REQUEST.getReasonPhrase(),
+        "Required request parameter '" + ex.getParameterName() + "' is missing",
+        request.getRequestURI());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<ApiErrorResponse> handleMethodArgumentTypeMismatch(
+      MethodArgumentTypeMismatchException ex,
+      HttpServletRequest request) {
+    ApiErrorResponse error = new ApiErrorResponse(
+        Instant.now(),
+        HttpStatus.BAD_REQUEST.value(),
+        HttpStatus.BAD_REQUEST.getReasonPhrase(),
+        "Invalid value for parameter '" + ex.getName() + "'",
+        request.getRequestURI());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
