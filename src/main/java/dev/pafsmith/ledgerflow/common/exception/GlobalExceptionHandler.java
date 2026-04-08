@@ -6,9 +6,12 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -75,6 +78,44 @@ public class GlobalExceptionHandler {
     response.put("validationErrors", validationErrors);
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ApiErrorResponse> handleDataIntegrityViolation(
+      DataIntegrityViolationException ex,
+      HttpServletRequest request) {
+    String message = "Data integrity violation";
+
+    if (ex.getMostSpecificCause() != null) {
+      String causeMessage = ex.getMostSpecificCause().getMessage();
+
+      if (causeMessage != null && causeMessage.contains("uq_budgets_user_category_year_month")) {
+        message = "Budget already exists for this category and period";
+      }
+    }
+
+    ApiErrorResponse error = new ApiErrorResponse(
+        Instant.now(),
+        HttpStatus.BAD_REQUEST.value(),
+        HttpStatus.BAD_REQUEST.getReasonPhrase(),
+        message,
+        request.getRequestURI());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+  }
+
+  @ExceptionHandler({ NoResourceFoundException.class, NoHandlerFoundException.class })
+  public ResponseEntity<ApiErrorResponse> handleNotFound(
+      Exception ex,
+      HttpServletRequest request) {
+    ApiErrorResponse error = new ApiErrorResponse(
+        Instant.now(),
+        HttpStatus.NOT_FOUND.value(),
+        HttpStatus.NOT_FOUND.getReasonPhrase(),
+        "Resource not found",
+        request.getRequestURI());
+
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
   }
 
   @ExceptionHandler(Exception.class)

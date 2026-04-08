@@ -3,22 +3,32 @@ package dev.pafsmith.ledgerflow.budgets.dto;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class CreateBudgetRequest {
-  @NotNull
+  @NotNull(message = "Category id is required")
   private UUID categoryId;
 
-  @NotNull
+  @NotBlank(message = "Name is required")
+  @Size(max = 100, message = "Name must be 100 characters or fewer")
   private String name;
 
-  @NotNull
+  @NotNull(message = "Limit amount is required")
+  @DecimalMin(value = "0.00", message = "Limit amount must be at least 0")
   private BigDecimal limitAmount;
 
-  @NotNull
+  @NotNull(message = "Year is required")
+  @Min(value = 1, message = "Year must be greater than 0")
   private Integer year;
 
-  @NotNull
+  @NotNull(message = "Month is required")
+  @Min(value = 1, message = "Month must be between 1 and 12")
+  @Max(value = 12, message = "Month must be between 1 and 12")
   private Integer month;
 
   public CreateBudgetRequest() {

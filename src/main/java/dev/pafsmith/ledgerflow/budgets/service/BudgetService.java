@@ -76,6 +76,8 @@ public class BudgetService {
   }
 
   public BudgetResponse createBudget(CreateBudgetRequest request, UUID userId) {
+    validateFilters(request.getYear(), request.getMonth());
+
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -86,13 +88,23 @@ public class BudgetService {
       throw new ForbiddenException("Category does not belong to user");
     }
 
+    boolean duplicateExists = budgetRepository.existsByUserIdAndCategoryIdAndYearAndMonth(
+        userId,
+        request.getCategoryId(),
+        request.getYear(),
+        request.getMonth());
+
+    if (duplicateExists) {
+      throw new BadRequestException("Budget already exists for this category and period");
+    }
+
     Budget budget = new Budget();
     budget.setUser(user);
     budget.setCategory(category);
     budget.setYear(request.getYear());
     budget.setMonth(request.getMonth());
     budget.setLimitAmount(request.getLimitAmount());
-    budget.setName(request.getName());
+    budget.setName(request.getName().trim());
 
     Budget savedBudget = budgetRepository.save(budget);
 

@@ -17,18 +17,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
 import dev.pafsmith.ledgerflow.budgets.dto.BudgetResponse;
 import dev.pafsmith.ledgerflow.budgets.dto.CreateBudgetRequest;
 import dev.pafsmith.ledgerflow.budgets.dto.UpdateBudgetRequest;
 import dev.pafsmith.ledgerflow.budgets.service.BudgetService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/budgets")
 @Tag(name = "Budgets", description = "Operations for managing budgets")
+@SecurityRequirement(name = "bearerAuth")
 public class BudgetController {
   private final BudgetService budgetService;
 
@@ -40,7 +44,9 @@ public class BudgetController {
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(summary = "Create a budget", description = "Creates a budget", responses = {
       @ApiResponse(responseCode = "201", description = "Budget created"),
-      @ApiResponse(responseCode = "400", description = "Validation failed"),
+      @ApiResponse(responseCode = "400", description = "Validation failed or budget already exists"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "403", description = "Forbidden"),
       @ApiResponse(responseCode = "404", description = "Related resource not found")
   })
   public BudgetResponse createBudget(@Valid @RequestBody CreateBudgetRequest request,
@@ -49,11 +55,15 @@ public class BudgetController {
     return budgetService.createBudget(request, userId);
   }
 
-  @GetMapping
-  @Operation(summary = "Get all budgets", description = "Gets all budgets for the user")
+  @GetMapping({ "", "/" })
+  @Operation(summary = "Get all budgets", description = "Gets all budgets for the user", responses = {
+      @ApiResponse(responseCode = "200", description = "Budgets returned"),
+      @ApiResponse(responseCode = "400", description = "Invalid filter values"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized")
+  })
   public List<BudgetResponse> getBudgets(@AuthenticationPrincipal UserDetails userDetails,
-      @RequestParam(required = false) Integer year,
-      @RequestParam(required = false) Integer month) {
+      @Parameter(description = "Budget year filter (must be greater than 0)") @RequestParam(required = false) Integer year,
+      @Parameter(description = "Budget month filter (1-12)") @RequestParam(required = false) Integer month) {
     UUID userId = UUID.fromString(userDetails.getUsername());
     return budgetService.getBudgetsForUser(userId, year, month);
   }
@@ -62,6 +72,7 @@ public class BudgetController {
   @Operation(summary = "Update a budget", description = "Updates a budget by id", responses = {
       @ApiResponse(responseCode = "200", description = "Budget updated"),
       @ApiResponse(responseCode = "400", description = "Validation failed"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
       @ApiResponse(responseCode = "403", description = "Forbidden"),
       @ApiResponse(responseCode = "404", description = "Resource not found")
   })
@@ -75,6 +86,7 @@ public class BudgetController {
   @DeleteMapping("/{budgetId}")
   @Operation(summary = "Delete a budget", description = "Deletes a budget by id", responses = {
       @ApiResponse(responseCode = "204", description = "Budget deleted"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
       @ApiResponse(responseCode = "403", description = "Forbidden"),
       @ApiResponse(responseCode = "404", description = "Resource not found")
   })
