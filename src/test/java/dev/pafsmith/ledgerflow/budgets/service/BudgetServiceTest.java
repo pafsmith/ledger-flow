@@ -287,6 +287,71 @@ class BudgetServiceTest {
   }
 
   @Test
+  void getBudgetById_shouldReturnBudgetSuccessfully() {
+    UUID budgetId = UUID.randomUUID();
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+
+    var response = budgetService.getBudgetById(budgetId, userId);
+
+    assertThat(response).isNotNull();
+    assertThat(response.getId()).isEqualTo(budgetId);
+    assertThat(response.getUserId()).isEqualTo(userId);
+    assertThat(response.getCategoryId()).isEqualTo(categoryId);
+    assertThat(response.getName()).isEqualTo("Groceries");
+    assertThat(response.getLimitAmount()).isEqualByComparingTo("500.00");
+    assertThat(response.getYear()).isEqualTo(2026);
+    assertThat(response.getMonth()).isEqualTo(4);
+  }
+
+  @Test
+  void getBudgetById_shouldThrowWhenUserNotFound() {
+    UUID budgetId = UUID.randomUUID();
+
+    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> budgetService.getBudgetById(budgetId, userId))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("User not found");
+
+    verify(budgetRepository, never()).findById(any(UUID.class));
+  }
+
+  @Test
+  void getBudgetById_shouldThrowWhenBudgetNotFound() {
+    UUID budgetId = UUID.randomUUID();
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> budgetService.getBudgetById(budgetId, userId))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("Budget not found");
+  }
+
+  @Test
+  void getBudgetById_shouldThrowForbiddenWhenBudgetNotOwnedByUser() {
+    UUID budgetId = UUID.randomUUID();
+
+    User otherUser = new User();
+    otherUser.setId(UUID.randomUUID());
+
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+    budget.setUser(otherUser);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+
+    assertThatThrownBy(() -> budgetService.getBudgetById(budgetId, userId))
+        .isInstanceOf(ForbiddenException.class)
+        .hasMessage("Budget does not belong to user");
+  }
+
+  @Test
   void updateBudget_shouldUpdateBudgetSuccessfully() {
     UUID budgetId = UUID.randomUUID();
 

@@ -165,8 +165,8 @@ class BudgetControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/budgets/ returns 200 with budget list")
-  void getBudgets_shouldReturnOk_whenTrailingSlashIsUsed() throws Exception {
+  @DisplayName("GET /api/budgets/{budgetId} returns 200 when budget exists")
+  void getBudgetById_shouldReturnOk() throws Exception {
     UUID budgetId = UUID.randomUUID();
     UUID categoryId = UUID.randomUUID();
 
@@ -181,16 +181,48 @@ class BudgetControllerTest extends BaseControllerTest {
     response.setCreatedAt(Instant.now());
     response.setUpdatedAt(Instant.now());
 
-    when(budgetService.getBudgetsForUser(AUTH_USER_ID, null, null)).thenReturn(List.of(response));
+    when(budgetService.getBudgetById(budgetId, AUTH_USER_ID)).thenReturn(response);
 
-    mockMvc.perform(get("/api/budgets/"))
+    mockMvc.perform(get("/api/budgets/{budgetId}", budgetId))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].id").value(budgetId.toString()))
-        .andExpect(jsonPath("$[0].userId").value(AUTH_USER_ID.toString()))
-        .andExpect(jsonPath("$[0].categoryId").value(categoryId.toString()))
-        .andExpect(jsonPath("$[0].name").value("Groceries"))
-        .andExpect(jsonPath("$[0].year").value(2026))
-        .andExpect(jsonPath("$[0].month").value(4));
+        .andExpect(jsonPath("$.id").value(budgetId.toString()))
+        .andExpect(jsonPath("$.userId").value(AUTH_USER_ID.toString()))
+        .andExpect(jsonPath("$.categoryId").value(categoryId.toString()))
+        .andExpect(jsonPath("$.name").value("Groceries"))
+        .andExpect(jsonPath("$.year").value(2026))
+        .andExpect(jsonPath("$.month").value(4));
+  }
+
+  @Test
+  @DisplayName("GET /api/budgets/{budgetId} returns 404 when budget does not exist")
+  void getBudgetById_shouldReturnNotFound_whenBudgetDoesNotExist() throws Exception {
+    UUID budgetId = UUID.randomUUID();
+
+    when(budgetService.getBudgetById(budgetId, AUTH_USER_ID))
+        .thenThrow(new ResourceNotFoundException("Budget not found"));
+
+    mockMvc.perform(get("/api/budgets/{budgetId}", budgetId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.status").value(404))
+        .andExpect(jsonPath("$.error").value("Not Found"))
+        .andExpect(jsonPath("$.message").value("Budget not found"))
+        .andExpect(jsonPath("$.path").value("/api/budgets/" + budgetId));
+  }
+
+  @Test
+  @DisplayName("GET /api/budgets/{budgetId} returns 403 when budget belongs to another user")
+  void getBudgetById_shouldReturnForbidden_whenBudgetDoesNotBelongToUser() throws Exception {
+    UUID budgetId = UUID.randomUUID();
+
+    when(budgetService.getBudgetById(budgetId, AUTH_USER_ID))
+        .thenThrow(new ForbiddenException("Budget does not belong to user"));
+
+    mockMvc.perform(get("/api/budgets/{budgetId}", budgetId))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.status").value(403))
+        .andExpect(jsonPath("$.error").value("Forbidden"))
+        .andExpect(jsonPath("$.message").value("Budget does not belong to user"))
+        .andExpect(jsonPath("$.path").value("/api/budgets/" + budgetId));
   }
 
   @Test

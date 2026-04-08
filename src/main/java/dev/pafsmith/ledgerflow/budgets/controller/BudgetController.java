@@ -55,7 +55,7 @@ public class BudgetController {
     return budgetService.createBudget(request, userId);
   }
 
-  @GetMapping({ "", "/" })
+  @GetMapping()
   @Operation(summary = "Get all budgets", description = "Gets all budgets for the user", responses = {
       @ApiResponse(responseCode = "200", description = "Budgets returned"),
       @ApiResponse(responseCode = "400", description = "Invalid filter values"),
@@ -66,6 +66,19 @@ public class BudgetController {
       @Parameter(description = "Budget month filter (1-12)") @RequestParam(required = false) Integer month) {
     UUID userId = UUID.fromString(userDetails.getUsername());
     return budgetService.getBudgetsForUser(userId, year, month);
+  }
+
+  @GetMapping("/{budgetId}")
+  @Operation(summary = "Get budget by id", description = "Gets a budget by id for the authenticated user", responses = {
+      @ApiResponse(responseCode = "200", description = "Budget returned"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized"),
+      @ApiResponse(responseCode = "403", description = "Forbidden"),
+      @ApiResponse(responseCode = "404", description = "Budget not found")
+  })
+  public BudgetResponse getBudgetById(@PathVariable UUID budgetId,
+      @AuthenticationPrincipal UserDetails userDetails) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+    return budgetService.getBudgetById(budgetId, userId);
   }
 
   @PutMapping("/{budgetId}")

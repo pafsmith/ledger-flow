@@ -55,6 +55,20 @@ public class BudgetService {
         .toList();
   }
 
+  public BudgetResponse getBudgetById(UUID budgetId, UUID userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Budget budget = budgetRepository.findById(budgetId)
+        .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
+
+    if (!budget.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Budget does not belong to user");
+    }
+
+    return mapToResponse(budget);
+  }
+
   private void validateFilters(Integer year, Integer month) {
     if (month != null && (month < 1 || month > 12)) {
       throw new BadRequestException("Month must be between 1 and 12");
