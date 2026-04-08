@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import dev.pafsmith.ledgerflow.budgets.dto.BudgetResponse;
 import dev.pafsmith.ledgerflow.budgets.dto.CreateBudgetRequest;
+import dev.pafsmith.ledgerflow.budgets.dto.UpdateBudgetRequest;
 import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.budgets.repository.BudgetRepository;
 import dev.pafsmith.ledgerflow.category.entity.Category;
@@ -96,6 +97,46 @@ public class BudgetService {
     Budget savedBudget = budgetRepository.save(budget);
 
     return mapToResponse(savedBudget);
+  }
+
+  public BudgetResponse updateBudget(UUID budgetId, UpdateBudgetRequest request, UUID userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Budget budget = budgetRepository.findById(budgetId)
+        .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
+
+    if (!budget.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Budget does not belong to user");
+    }
+
+    Category category = categoryRepository.findById(request.getCategoryId())
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+    if (!category.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Category does not belong to user");
+    }
+
+    boolean duplicateExists = budgetRepository.existsByUserIdAndCategoryIdAndYearAndMonthAndIdNot(
+        userId,
+        request.getCategoryId(),
+        request.getYear(),
+        request.getMonth(),
+        budgetId);
+
+    if (duplicateExists) {
+      throw new BadRequestException("Budget already exists for this category and period");
+    }
+
+    budget.setCategory(category);
+    budget.setName(request.getName().trim());
+    budget.setLimitAmount(request.getLimitAmount());
+    budget.setYear(request.getYear());
+    budget.setMonth(request.getMonth());
+
+    Budget updatedBudget = budgetRepository.save(budget);
+
+    return mapToResponse(updatedBudget);
   }
 
   private BudgetResponse mapToResponse(Budget budget) {
