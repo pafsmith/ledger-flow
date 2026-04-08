@@ -1,6 +1,5 @@
 package dev.pafsmith.ledgerflow.category.controller;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,13 +15,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 import dev.pafsmith.ledgerflow.category.dto.CategoryResponse;
 import dev.pafsmith.ledgerflow.category.dto.CreateCategoryRequest;
 import dev.pafsmith.ledgerflow.category.enums.CategoryType;
 import dev.pafsmith.ledgerflow.category.service.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController

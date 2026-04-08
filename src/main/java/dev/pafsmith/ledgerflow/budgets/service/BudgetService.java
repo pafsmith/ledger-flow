@@ -5,20 +5,78 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import dev.pafsmith.ledgerflow.budgets.dto.BudgetResponse;
+import dev.pafsmith.ledgerflow.budgets.dto.CreateBudgetRequest;
+import dev.pafsmith.ledgerflow.budgets.dto.UpdateBudgetRequest;
 import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.budgets.repository.BudgetRepository;
+import dev.pafsmith.ledgerflow.category.entity.Category;
+import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
+import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
+import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
+import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
+import dev.pafsmith.ledgerflow.user.entity.User;
+import dev.pafsmith.ledgerflow.user.repository.UserRepository;
 
 @Service
 public class BudgetService {
 
   private final BudgetRepository budgetRepository;
 
-  public BudgetService(BudgetRepository budgetRepository) {
+  private final CategoryRepository categoryRepository;
+
+  private final UserRepository userRepository;
+
+  public BudgetService(BudgetRepository budgetRepository, CategoryRepository categoryRepository,
+      UserRepository userRepository) {
     this.budgetRepository = budgetRepository;
+    this.categoryRepository = categoryRepository;
+    this.userRepository = userRepository;
   }
 
-  public List<Budget> getBudgetsForUser(UUID userId) {
-    return budgetRepository.findByUserId(userId);
+  public List<BudgetResponse> getBudgetsForUser(UUID userId, Integer year, Integer month) {
+    validateFilters(year, month);
+
+    List<Budget> budgets;
+
+    if (year != null && month != null) {
+      budgets = budgetRepository.findByUserIdAndYearAndMonth(userId, year, month);
+    } else if (year != null) {
+      budgets = budgetRepository.findByUserIdAndYear(userId, year);
+    } else if (month != null) {
+      budgets = budgetRepository.findByUserIdAndMonth(userId, month);
+    } else {
+      budgets = budgetRepository.findByUserId(userId);
+    }
+
+    return budgets
+        .stream()
+        .map(this::mapToResponse)
+        .toList();
+  }
+
+  public BudgetResponse getBudgetById(UUID budgetId, UUID userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Budget budget = budgetRepository.findById(budgetId)
+        .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
+
+    if (!budget.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Budget does not belong to user");
+    }
+
+    return mapToResponse(budget);
+  }
+
+  private void validateFilters(Integer year, Integer month) {
+    if (month != null && (month < 1 || month > 12)) {
+      throw new BadRequestException("Month must be between 1 and 12");
+    }
+
+    if (year != null && year < 1) {
+      throw new BadRequestException("Year must be greater than 0");
+    }
   }
 
   public List<Budget> getBudgetsForUserForMonth(UUID userId, Integer year, Integer month) {
@@ -29,5 +87,109 @@ public class BudgetService {
     return budgetRepository
         .findByUserIdAndCategoryIdAndYearAndMonth(userId, categoryId, year, month)
         .orElseThrow(() -> new RuntimeException("Budget not found"));
+  }
+
+  public BudgetResponse createBudget(CreateBudgetRequest request, UUID userId) {
+    validateFilters(request.getYear(), request.getMonth());
+
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Category category = categoryRepository.findById(request.getCategoryId())
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+    if (!category.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Category does not belong to user");
+    }
+
+    boolean duplicateExists = budgetRepository.existsByUserIdAndCategoryIdAndYearAndMonth(
+        userId,
+        request.getCategoryId(),
+        request.getYear(),
+        request.getMonth());
+
+    if (duplicateExists) {
+      throw new BadRequestException("Budget already exists for this category and period");
+    }
+
+    Budget budget = new Budget();
+    budget.setUser(user);
+    budget.setCategory(category);
+    budget.setYear(request.getYear());
+    budget.setMonth(request.getMonth());
+    budget.setLimitAmount(request.getLimitAmount());
+    budget.setName(request.getName().trim());
+
+    Budget savedBudget = budgetRepository.save(budget);
+
+    return mapToResponse(savedBudget);
+  }
+
+  public BudgetResponse updateBudget(UUID budgetId, UpdateBudgetRequest request, UUID userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Budget budget = budgetRepository.findById(budgetId)
+        .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
+
+    if (!budget.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Budget does not belong to user");
+    }
+
+    Category category = categoryRepository.findById(request.getCategoryId())
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+    if (!category.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Category does not belong to user");
+    }
+
+    boolean duplicateExists = budgetRepository.existsByUserIdAndCategoryIdAndYearAndMonthAndIdNot(
+        userId,
+        request.getCategoryId(),
+        request.getYear(),
+        request.getMonth(),
+        budgetId);
+
+    if (duplicateExists) {
+      throw new BadRequestException("Budget already exists for this category and period");
+    }
+
+    budget.setCategory(category);
+    budget.setName(request.getName().trim());
+    budget.setLimitAmount(request.getLimitAmount());
+    budget.setYear(request.getYear());
+    budget.setMonth(request.getMonth());
+
+    Budget updatedBudget = budgetRepository.save(budget);
+
+    return mapToResponse(updatedBudget);
+  }
+
+  public void deleteBudget(UUID budgetId, UUID userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    Budget budget = budgetRepository.findById(budgetId)
+        .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
+
+    if (!budget.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Budget does not belong to user");
+    }
+
+    budgetRepository.delete(budget);
+  }
+
+  private BudgetResponse mapToResponse(Budget budget) {
+    BudgetResponse response = new BudgetResponse();
+    response.setId(budget.getId());
+    response.setUserId(budget.getUser().getId());
+    response.setCategoryId(budget.getCategory().getId());
+    response.setYear(budget.getYear());
+    response.setMonth(budget.getMonth());
+    response.setName(budget.getName());
+    response.setLimitAmount(budget.getLimitAmount());
+    response.setCreatedAt(budget.getCreatedAt());
+    response.setUpdatedAt(budget.getUpdatedAt());
+    return response;
   }
 }
