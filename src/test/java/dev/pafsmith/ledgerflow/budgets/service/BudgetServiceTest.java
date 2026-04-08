@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import dev.pafsmith.ledgerflow.budgets.dto.CreateBudgetRequest;
+import dev.pafsmith.ledgerflow.budgets.dto.UpdateBudgetRequest;
 import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.budgets.repository.BudgetRepository;
 import dev.pafsmith.ledgerflow.category.entity.Category;
@@ -262,6 +263,206 @@ class BudgetServiceTest {
         .hasMessage("Month must be between 1 and 12");
 
     verifyNoInteractions(budgetRepository);
+  }
+
+  @Test
+  void updateBudget_shouldUpdateBudgetSuccessfully() {
+    UUID budgetId = UUID.randomUUID();
+
+    Budget existingBudget = createBudget(2026, 4);
+    existingBudget.setId(budgetId);
+
+    UpdateBudgetRequest request = new UpdateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("  Updated Groceries  ");
+    request.setLimitAmount(new BigDecimal("600.00"));
+    request.setYear(2026);
+    request.setMonth(5);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(existingBudget));
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+    when(budgetRepository.existsByUserIdAndCategoryIdAndYearAndMonthAndIdNot(userId, categoryId, 2026, 5, budgetId))
+        .thenReturn(false);
+    when(budgetRepository.save(any(Budget.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    var response = budgetService.updateBudget(budgetId, request, userId);
+
+    assertThat(response).isNotNull();
+    assertThat(response.getId()).isEqualTo(budgetId);
+    assertThat(response.getUserId()).isEqualTo(userId);
+    assertThat(response.getCategoryId()).isEqualTo(categoryId);
+    assertThat(response.getName()).isEqualTo("Updated Groceries");
+    assertThat(response.getLimitAmount()).isEqualByComparingTo("600.00");
+    assertThat(response.getYear()).isEqualTo(2026);
+    assertThat(response.getMonth()).isEqualTo(5);
+
+    ArgumentCaptor<Budget> captor = ArgumentCaptor.forClass(Budget.class);
+    verify(budgetRepository).save(captor.capture());
+    Budget savedBudget = captor.getValue();
+
+    assertThat(savedBudget.getName()).isEqualTo("Updated Groceries");
+    assertThat(savedBudget.getLimitAmount()).isEqualByComparingTo("600.00");
+    assertThat(savedBudget.getYear()).isEqualTo(2026);
+    assertThat(savedBudget.getMonth()).isEqualTo(5);
+    assertThat(savedBudget.getCategory()).isEqualTo(category);
+  }
+
+  @Test
+  void updateBudget_shouldThrowWhenUserNotFound() {
+    UUID budgetId = UUID.randomUUID();
+
+    UpdateBudgetRequest request = new UpdateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Updated Groceries");
+    request.setLimitAmount(new BigDecimal("600.00"));
+    request.setYear(2026);
+    request.setMonth(5);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> budgetService.updateBudget(budgetId, request, userId))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("User not found");
+
+    verify(budgetRepository, never()).findById(any(UUID.class));
+    verify(categoryRepository, never()).findById(any(UUID.class));
+    verify(budgetRepository, never()).save(any(Budget.class));
+  }
+
+  @Test
+  void updateBudget_shouldThrowWhenBudgetNotFound() {
+    UUID budgetId = UUID.randomUUID();
+
+    UpdateBudgetRequest request = new UpdateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Updated Groceries");
+    request.setLimitAmount(new BigDecimal("600.00"));
+    request.setYear(2026);
+    request.setMonth(5);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> budgetService.updateBudget(budgetId, request, userId))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("Budget not found");
+
+    verify(categoryRepository, never()).findById(any(UUID.class));
+    verify(budgetRepository, never()).save(any(Budget.class));
+  }
+
+  @Test
+  void updateBudget_shouldThrowForbiddenWhenBudgetNotOwnedByUser() {
+    UUID budgetId = UUID.randomUUID();
+
+    User otherUser = new User();
+    otherUser.setId(UUID.randomUUID());
+
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+    budget.setUser(otherUser);
+
+    UpdateBudgetRequest request = new UpdateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Updated Groceries");
+    request.setLimitAmount(new BigDecimal("600.00"));
+    request.setYear(2026);
+    request.setMonth(5);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+
+    assertThatThrownBy(() -> budgetService.updateBudget(budgetId, request, userId))
+        .isInstanceOf(ForbiddenException.class)
+        .hasMessage("Budget does not belong to user");
+
+    verify(categoryRepository, never()).findById(any(UUID.class));
+    verify(budgetRepository, never()).save(any(Budget.class));
+  }
+
+  @Test
+  void updateBudget_shouldThrowWhenCategoryNotFound() {
+    UUID budgetId = UUID.randomUUID();
+
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+
+    UpdateBudgetRequest request = new UpdateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Updated Groceries");
+    request.setLimitAmount(new BigDecimal("600.00"));
+    request.setYear(2026);
+    request.setMonth(5);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> budgetService.updateBudget(budgetId, request, userId))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("Category not found");
+
+    verify(budgetRepository, never()).save(any(Budget.class));
+  }
+
+  @Test
+  void updateBudget_shouldThrowForbiddenWhenCategoryNotOwnedByUser() {
+    UUID budgetId = UUID.randomUUID();
+
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+
+    User otherUser = new User();
+    otherUser.setId(UUID.randomUUID());
+
+    Category otherUsersCategory = new Category();
+    otherUsersCategory.setId(categoryId);
+    otherUsersCategory.setUser(otherUser);
+
+    UpdateBudgetRequest request = new UpdateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Updated Groceries");
+    request.setLimitAmount(new BigDecimal("600.00"));
+    request.setYear(2026);
+    request.setMonth(5);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(otherUsersCategory));
+
+    assertThatThrownBy(() -> budgetService.updateBudget(budgetId, request, userId))
+        .isInstanceOf(ForbiddenException.class)
+        .hasMessage("Category does not belong to user");
+
+    verify(budgetRepository, never()).save(any(Budget.class));
+  }
+
+  @Test
+  void updateBudget_shouldThrowWhenDuplicateBudgetExists() {
+    UUID budgetId = UUID.randomUUID();
+
+    Budget budget = createBudget(2026, 4);
+    budget.setId(budgetId);
+
+    UpdateBudgetRequest request = new UpdateBudgetRequest();
+    request.setCategoryId(categoryId);
+    request.setName("Updated Groceries");
+    request.setLimitAmount(new BigDecimal("600.00"));
+    request.setYear(2026);
+    request.setMonth(5);
+
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(budgetRepository.findById(budgetId)).thenReturn(Optional.of(budget));
+    when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+    when(budgetRepository.existsByUserIdAndCategoryIdAndYearAndMonthAndIdNot(userId, categoryId, 2026, 5, budgetId))
+        .thenReturn(true);
+
+    assertThatThrownBy(() -> budgetService.updateBudget(budgetId, request, userId))
+        .isInstanceOf(BadRequestException.class)
+        .hasMessage("Budget already exists for this category and period");
+
+    verify(budgetRepository, never()).save(any(Budget.class));
   }
 
   private Budget createBudget(int year, int month) {
