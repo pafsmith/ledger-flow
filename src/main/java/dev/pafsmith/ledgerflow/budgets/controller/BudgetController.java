@@ -8,8 +8,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,8 +48,11 @@ public class BudgetController {
 
   @GetMapping
   @Operation(summary = "Get all budgets", description = "Gets all budgets for the user")
-  public List<BudgetResponse> getBudgets(@AuthenticationPrincipal UserDetails userDetails) {
+  public List<BudgetResponse> getBudgets(@AuthenticationPrincipal UserDetails userDetails,
+      @RequestParam(required = false) Integer year,
+      @RequestParam(required = false) Integer month) {
     UUID userId = UUID.fromString(userDetails.getUsername());
-    return budgetService.getBudgetsForUser(userId);
+    return budgetService.getBudgetsForUser(userId, year, month);
   }
+
 }

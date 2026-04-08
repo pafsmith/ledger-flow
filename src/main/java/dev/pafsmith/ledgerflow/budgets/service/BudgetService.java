@@ -11,6 +11,7 @@ import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.budgets.repository.BudgetRepository;
 import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
+import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
 import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
@@ -32,12 +33,35 @@ public class BudgetService {
     this.userRepository = userRepository;
   }
 
-  public List<BudgetResponse> getBudgetsForUser(UUID userId) {
-    return budgetRepository
-        .findByUserId(userId)
+  public List<BudgetResponse> getBudgetsForUser(UUID userId, Integer year, Integer month) {
+    validateFilters(year, month);
+
+    List<Budget> budgets;
+
+    if (year != null && month != null) {
+      budgets = budgetRepository.findByUserIdAndYearAndMonth(userId, year, month);
+    } else if (year != null) {
+      budgets = budgetRepository.findByUserIdAndYear(userId, year);
+    } else if (month != null) {
+      budgets = budgetRepository.findByUserIdAndMonth(userId, month);
+    } else {
+      budgets = budgetRepository.findByUserId(userId);
+    }
+
+    return budgets
         .stream()
         .map(this::mapToResponse)
         .toList();
+  }
+
+  private void validateFilters(Integer year, Integer month) {
+    if (month != null && (month < 1 || month > 12)) {
+      throw new BadRequestException("Month must be between 1 and 12");
+    }
+
+    if (year != null && year < 1) {
+      throw new BadRequestException("Year must be greater than 0");
+    }
   }
 
   public List<Budget> getBudgetsForUserForMonth(UUID userId, Integer year, Integer month) {
