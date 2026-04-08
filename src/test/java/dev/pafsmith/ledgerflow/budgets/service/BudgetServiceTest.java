@@ -5,10 +5,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +27,7 @@ import dev.pafsmith.ledgerflow.budgets.entity.Budget;
 import dev.pafsmith.ledgerflow.budgets.repository.BudgetRepository;
 import dev.pafsmith.ledgerflow.category.entity.Category;
 import dev.pafsmith.ledgerflow.category.repository.CategoryRepository;
+import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
 import dev.pafsmith.ledgerflow.common.exception.ForbiddenException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
@@ -176,5 +179,102 @@ class BudgetServiceTest {
         .hasMessage("Category does not belong to user");
 
     verify(budgetRepository, never()).save(any(Budget.class));
+  }
+
+  @Test
+  void getBudgetsForUser_shouldReturnAllBudgetsWhenNoFiltersProvided() {
+    Budget budget = createBudget(2026, 4);
+    when(budgetRepository.findByUserId(userId)).thenReturn(List.of(budget));
+
+    var response = budgetService.getBudgetsForUser(userId, null, null);
+
+    assertThat(response).hasSize(1);
+    assertThat(response.getFirst().getId()).isEqualTo(budget.getId());
+    assertThat(response.getFirst().getUserId()).isEqualTo(userId);
+    assertThat(response.getFirst().getCategoryId()).isEqualTo(categoryId);
+
+    verify(budgetRepository).findByUserId(userId);
+    verify(budgetRepository, never()).findByUserIdAndYear(any(UUID.class), any(Integer.class));
+    verify(budgetRepository, never()).findByUserIdAndMonth(any(UUID.class), any(Integer.class));
+    verify(budgetRepository, never()).findByUserIdAndYearAndMonth(any(UUID.class), any(Integer.class),
+        any(Integer.class));
+  }
+
+  @Test
+  void getBudgetsForUser_shouldFilterByYearWhenOnlyYearProvided() {
+    int year = 2026;
+    Budget budget = createBudget(year, 4);
+    when(budgetRepository.findByUserIdAndYear(userId, year)).thenReturn(List.of(budget));
+
+    var response = budgetService.getBudgetsForUser(userId, year, null);
+
+    assertThat(response).hasSize(1);
+    assertThat(response.getFirst().getYear()).isEqualTo(year);
+
+    verify(budgetRepository).findByUserIdAndYear(userId, year);
+    verify(budgetRepository, never()).findByUserId(any(UUID.class));
+    verify(budgetRepository, never()).findByUserIdAndMonth(any(UUID.class), any(Integer.class));
+    verify(budgetRepository, never()).findByUserIdAndYearAndMonth(any(UUID.class), any(Integer.class),
+        any(Integer.class));
+  }
+
+  @Test
+  void getBudgetsForUser_shouldFilterByMonthWhenOnlyMonthProvided() {
+    int month = 4;
+    Budget budget = createBudget(2026, month);
+    when(budgetRepository.findByUserIdAndMonth(userId, month)).thenReturn(List.of(budget));
+
+    var response = budgetService.getBudgetsForUser(userId, null, month);
+
+    assertThat(response).hasSize(1);
+    assertThat(response.getFirst().getMonth()).isEqualTo(month);
+
+    verify(budgetRepository).findByUserIdAndMonth(userId, month);
+    verify(budgetRepository, never()).findByUserId(any(UUID.class));
+    verify(budgetRepository, never()).findByUserIdAndYear(any(UUID.class), any(Integer.class));
+    verify(budgetRepository, never()).findByUserIdAndYearAndMonth(any(UUID.class), any(Integer.class),
+        any(Integer.class));
+  }
+
+  @Test
+  void getBudgetsForUser_shouldFilterByYearAndMonthWhenBothProvided() {
+    int year = 2026;
+    int month = 4;
+    Budget budget = createBudget(year, month);
+    when(budgetRepository.findByUserIdAndYearAndMonth(userId, year, month)).thenReturn(List.of(budget));
+
+    var response = budgetService.getBudgetsForUser(userId, year, month);
+
+    assertThat(response).hasSize(1);
+    assertThat(response.getFirst().getYear()).isEqualTo(year);
+    assertThat(response.getFirst().getMonth()).isEqualTo(month);
+
+    verify(budgetRepository).findByUserIdAndYearAndMonth(userId, year, month);
+    verify(budgetRepository, never()).findByUserId(any(UUID.class));
+    verify(budgetRepository, never()).findByUserIdAndYear(any(UUID.class), any(Integer.class));
+    verify(budgetRepository, never()).findByUserIdAndMonth(any(UUID.class), any(Integer.class));
+  }
+
+  @Test
+  void getBudgetsForUser_shouldThrowBadRequestWhenMonthIsOutOfRange() {
+    assertThatThrownBy(() -> budgetService.getBudgetsForUser(userId, 2026, 13))
+        .isInstanceOf(BadRequestException.class)
+        .hasMessage("Month must be between 1 and 12");
+
+    verifyNoInteractions(budgetRepository);
+  }
+
+  private Budget createBudget(int year, int month) {
+    Budget budget = new Budget();
+    budget.setId(UUID.randomUUID());
+    budget.setUser(user);
+    budget.setCategory(category);
+    budget.setName("Groceries");
+    budget.setLimitAmount(new BigDecimal("500.00"));
+    budget.setYear(year);
+    budget.setMonth(month);
+    budget.setCreatedAt(Instant.now());
+    budget.setUpdatedAt(Instant.now());
+    return budget;
   }
 }
