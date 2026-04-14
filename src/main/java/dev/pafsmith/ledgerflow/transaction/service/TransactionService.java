@@ -1,7 +1,5 @@
 package dev.pafsmith.ledgerflow.transaction.service;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -206,52 +204,6 @@ public class TransactionService {
       throw new ForbiddenException("Transaction does not belong to user");
     }
     return mapToResponse(transaction);
-  }
-
-  public List<TransactionResponse> getTransactionsForAccount(UUID userId, UUID accountId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    Account account = accountRepository.findById(accountId)
-        .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-    if (!account.getUser().getId().equals(user.getId())) {
-      throw new ForbiddenException("Account does not belong to user");
-    }
-    return transactionRepository.findByAccountIdOrderByTransactionDateDesc(accountId)
-        .stream()
-        .map(this::mapToResponse)
-        .toList();
-  }
-
-  public List<TransactionResponse> getTransactionsForCategory(UUID userId, UUID categoryId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    Category category = categoryRepository.findById(categoryId)
-        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-    if (!category.getUser().getId().equals(user.getId())) {
-      throw new ForbiddenException("Category does not belong to user");
-    }
-    return transactionRepository.findByCategoryIdOrderByTransactionDateDesc(categoryId)
-        .stream()
-        .map(this::mapToResponse)
-        .toList();
-  }
-
-  public List<TransactionResponse> getTransactionsForUserByType(UUID userId, TransactionType type) {
-    return transactionRepository.findByUserIdAndTypeOrderByTransactionDateDesc(userId, type)
-        .stream()
-        .map(this::mapToResponse)
-        .toList();
-  }
-
-  public List<TransactionResponse> getTransactionsForUserBetweenDates(
-      UUID userId,
-      LocalDate startDate,
-      LocalDate endDate) {
-    return transactionRepository
-        .findByUserIdAndTransactionDateBetweenOrderByTransactionDateDesc(userId, startDate, endDate)
-        .stream()
-        .map(this::mapToResponse)
-        .toList();
   }
 
   public TransactionResponse updateTransaction(UUID transactionId, UpdateTransactionRequest request, String userId) {
