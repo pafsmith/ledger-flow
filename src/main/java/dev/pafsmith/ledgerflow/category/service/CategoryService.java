@@ -92,7 +92,7 @@ public class CategoryService {
     if (user.getId().equals(category.getUser().getId())) {
       categoryRepository.deleteById(categoryId);
     } else {
-      throw new BadRequestException("You do not have permission to delete this category");
+      throw new ForbiddenException("You do not have permission to delete this category");
     }
 
   }

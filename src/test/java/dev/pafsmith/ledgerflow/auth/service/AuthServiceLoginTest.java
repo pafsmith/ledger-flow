@@ -1,7 +1,6 @@
 package dev.pafsmith.ledgerflow.auth.service;
 
 import dev.pafsmith.ledgerflow.auth.dto.LoginRequest;
-import dev.pafsmith.ledgerflow.common.exception.BadRequestException;
 import dev.pafsmith.ledgerflow.common.exception.ResourceNotFoundException;
 import dev.pafsmith.ledgerflow.user.entity.User;
 import dev.pafsmith.ledgerflow.user.repository.UserRepository;
@@ -71,7 +70,7 @@ class AuthServiceLoginTest {
 
     assertThatThrownBy(() -> authService.login(request))
         .isInstanceOf(ResourceNotFoundException.class)
-        .hasMessage("User not found");
+        .hasMessage("User details incorrect");
   }
 
   @Test
@@ -80,8 +79,8 @@ class AuthServiceLoginTest {
     when(passwordEncoder.matches("password123", "hashed-password")).thenReturn(false);
 
     assertThatThrownBy(() -> authService.login(request))
-        .isInstanceOf(BadRequestException.class)
-        .hasMessage("Invalid email or password");
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("User details incorrect");
 
     verify(jwtService, never()).generateToken(any(User.class));
   }
