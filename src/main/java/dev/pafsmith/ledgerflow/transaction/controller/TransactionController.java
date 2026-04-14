@@ -1,10 +1,7 @@
 package dev.pafsmith.ledgerflow.transaction.controller;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,13 +21,11 @@ import dev.pafsmith.ledgerflow.transaction.dto.PagedTransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionFilterRequest;
 import dev.pafsmith.ledgerflow.transaction.dto.TransactionResponse;
 import dev.pafsmith.ledgerflow.transaction.dto.UpdateTransactionRequest;
-import dev.pafsmith.ledgerflow.transaction.enums.TransactionType;
 import dev.pafsmith.ledgerflow.transaction.service.TransactionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import io.swagger.v3.oas.annotations.Operation;
-
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -77,42 +72,6 @@ public class TransactionController {
   public TransactionResponse getTransactionById(@PathVariable UUID transactionId,
       @AuthenticationPrincipal UserDetails userDetails) {
     return transactionService.getTransactionById(transactionId, userDetails.getUsername());
-  }
-
-  @GetMapping("/account/{accountId}")
-  @Operation(summary = "Get all transactions for an account")
-  public List<TransactionResponse> getTransactionsForAccount(@AuthenticationPrincipal UserDetails userDetails,
-      @PathVariable UUID accountId) {
-    UUID userId = UUID.fromString(userDetails.getUsername());
-    return transactionService.getTransactionsForAccount(userId, accountId);
-  }
-
-  @GetMapping("/category/{categoryId}")
-  @Operation(summary = "Get all transactions for a category")
-  public List<TransactionResponse> getTransactionsForCategory(@AuthenticationPrincipal UserDetails userDetails,
-      @PathVariable UUID categoryId) {
-
-    UUID userId = UUID.fromString(userDetails.getUsername());
-    return transactionService.getTransactionsForCategory(userId, categoryId);
-  }
-
-  @GetMapping("/type/{type}")
-  @Operation(summary = "Get all transactions by user and type")
-  public List<TransactionResponse> getTransactionsForUserByType(
-      @AuthenticationPrincipal UserDetails userDetails,
-      @PathVariable TransactionType type) {
-    UUID userId = UUID.fromString(userDetails.getUsername());
-    return transactionService.getTransactionsForUserByType(userId, type);
-  }
-
-  @GetMapping("/date-range")
-  @Operation(summary = "Get all transactions by user within a date range")
-  public List<TransactionResponse> getTransactionsForUserBetweenDates(
-      @AuthenticationPrincipal UserDetails userDetails,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-    UUID userId = UUID.fromString(userDetails.getUsername());
-    return transactionService.getTransactionsForUserBetweenDates(userId, startDate, endDate);
   }
 
   @PutMapping("/{transactionId}")
