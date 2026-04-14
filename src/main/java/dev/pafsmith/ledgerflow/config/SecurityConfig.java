@@ -3,7 +3,6 @@ package dev.pafsmith.ledgerflow.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -37,13 +36,13 @@ public class SecurityConfig {
             .requestMatchers(
                 "/api/auth/register",
                 "/api/auth/login",
+                "/api/health",
                 "/swagger-ui.html",
                 "/swagger-ui/**",
                 "/v3/api-docs/**")
             .permitAll()
             .anyRequest().authenticated())
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .httpBasic(Customizer.withDefaults());
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
