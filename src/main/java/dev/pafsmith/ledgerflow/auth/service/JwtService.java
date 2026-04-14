@@ -40,13 +40,13 @@ public class JwtService {
         .compact();
   }
 
-  public String extractUsername(String token) {
+  public String extractUserId(String token) {
     return extractClaim(token, Claims::getSubject);
   }
 
-  public boolean isTokenValid(String token, String username) {
-    String extractedUsername = extractUsername(token);
-    return extractedUsername.equals(username) && !isTokenExpired(token);
+  public boolean isTokenValid(String token, String userId) {
+    String extractedUserId = extractUserId(token);
+    return extractedUserId.equals(userId) && !isTokenExpired(token);
   }
 
   private boolean isTokenExpired(String token) {
