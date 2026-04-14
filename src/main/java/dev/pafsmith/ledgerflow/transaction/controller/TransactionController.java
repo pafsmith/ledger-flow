@@ -79,12 +79,6 @@ public class TransactionController {
     return transactionService.getTransactionById(transactionId, userDetails.getUsername());
   }
 
-  @GetMapping("/user/{userId}")
-  @Operation(summary = "Get all transactions for a user")
-  public List<TransactionResponse> getTransactionsForUser(@PathVariable UUID userId) {
-    return transactionService.getTransactionsForUser(userId);
-  }
-
   @GetMapping("/account/{accountId}")
   @Operation(summary = "Get all transactions for an account")
   public List<TransactionResponse> getTransactionsForAccount(@PathVariable UUID accountId) {

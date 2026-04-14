@@ -208,13 +208,6 @@ public class TransactionService {
     return mapToResponse(transaction);
   }
 
-  public List<TransactionResponse> getTransactionsForUser(UUID userId) {
-    return transactionRepository.findByUserIdOrderByTransactionDateDesc(userId)
-        .stream()
-        .map(this::mapToResponse)
-        .toList();
-  }
-
   public List<TransactionResponse> getTransactionsForAccount(UUID accountId) {
     return transactionRepository.findByAccountIdOrderByTransactionDateDesc(accountId)
         .stream()
