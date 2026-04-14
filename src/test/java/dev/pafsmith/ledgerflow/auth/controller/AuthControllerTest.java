@@ -16,6 +16,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -92,6 +93,7 @@ class AuthControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @WithMockUser(username = "11111111-1111-1111-1111-111111111111")
   @DisplayName("GET /api/auth/me returns current user when authenticated")
   void getCurrentUser_shouldReturnCurrentUser() throws Exception {
     String userId = "11111111-1111-1111-1111-111111111111";
@@ -103,8 +105,7 @@ class AuthControllerTest extends BaseControllerTest {
 
     when(authService.getCurrentUser(userId)).thenReturn(response);
 
-    mockMvc.perform(get("/api/auth/me")
-        .principal(() -> userId))
+    mockMvc.perform(get("/api/auth/me"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.email").value("paul@test.com"))
         .andExpect(jsonPath("$.firstName").value("Paul"))
