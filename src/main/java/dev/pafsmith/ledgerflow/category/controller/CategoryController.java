@@ -64,17 +64,12 @@ public class CategoryController {
     return categoryService.getCategoryById(userId, categoryId);
   }
 
-  @GetMapping("/user/{userId}")
-  @Operation(summary = "Get a list of categories by userId")
-  public List<CategoryResponse> getCategoriesForUser(@PathVariable UUID userId) {
-    return categoryService.getCategoriesForUser(userId);
-  }
-
-  @GetMapping("/user/{userId}/type/{type}")
+  @GetMapping("/type/{type}")
   @Operation(summary = "Get a list of categories by userId and type")
   public List<CategoryResponse> getCategoriesForUserByType(
-      @PathVariable UUID userId,
+      @AuthenticationPrincipal UserDetails userDetails,
       @PathVariable CategoryType type) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
     return categoryService.getCategoriesForUserByType(userId, type);
   }
 

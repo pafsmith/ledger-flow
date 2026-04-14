@@ -125,13 +125,11 @@ class CategoryControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/categories/user/{userId} returns categories for user")
+  @DisplayName("GET /api/categories returns categories for authenticated user")
   void getCategoriesForUser_shouldReturnCategories() throws Exception {
-    UUID userId = UUID.randomUUID();
-
     CategoryResponse groceries = new CategoryResponse();
     groceries.setId(UUID.randomUUID());
-    groceries.setUserId(userId);
+    groceries.setUserId(AUTH_USER_ID);
     groceries.setName("Groceries");
     groceries.setType(CategoryType.EXPENSE);
     groceries.setSystemDefined(false);
@@ -140,16 +138,16 @@ class CategoryControllerTest extends BaseControllerTest {
 
     CategoryResponse salary = new CategoryResponse();
     salary.setId(UUID.randomUUID());
-    salary.setUserId(userId);
+    salary.setUserId(AUTH_USER_ID);
     salary.setName("Salary");
     salary.setType(CategoryType.INCOME);
     salary.setSystemDefined(false);
     salary.setCreatedAt(Instant.now());
     salary.setUpdatedAt(Instant.now());
 
-    when(categoryService.getCategoriesForUser(userId)).thenReturn(List.of(groceries, salary));
+    when(categoryService.getCategoriesForUser(AUTH_USER_ID)).thenReturn(List.of(groceries, salary));
 
-    mockMvc.perform(get("/api/categories/user/{userId}", userId))
+    mockMvc.perform(get("/api/categories"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(2))
         .andExpect(jsonPath("$[0].name").value("Groceries"))
@@ -159,13 +157,11 @@ class CategoryControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/categories/user/{userId}/type/{type} returns filtered categories")
+  @DisplayName("GET /api/categories/type/{type} returns filtered categories for authenticated user")
   void getCategoriesForUserByType_shouldReturnFilteredCategories() throws Exception {
-    UUID userId = UUID.randomUUID();
-
     CategoryResponse groceries = new CategoryResponse();
     groceries.setId(UUID.randomUUID());
-    groceries.setUserId(userId);
+    groceries.setUserId(AUTH_USER_ID);
     groceries.setName("Groceries");
     groceries.setType(CategoryType.EXPENSE);
     groceries.setSystemDefined(false);
@@ -174,17 +170,17 @@ class CategoryControllerTest extends BaseControllerTest {
 
     CategoryResponse transport = new CategoryResponse();
     transport.setId(UUID.randomUUID());
-    transport.setUserId(userId);
+    transport.setUserId(AUTH_USER_ID);
     transport.setName("Transport");
     transport.setType(CategoryType.EXPENSE);
     transport.setSystemDefined(false);
     transport.setCreatedAt(Instant.now());
     transport.setUpdatedAt(Instant.now());
 
-    when(categoryService.getCategoriesForUserByType(userId, CategoryType.EXPENSE))
+    when(categoryService.getCategoriesForUserByType(AUTH_USER_ID, CategoryType.EXPENSE))
         .thenReturn(List.of(groceries, transport));
 
-    mockMvc.perform(get("/api/categories/user/{userId}/type/{type}", userId, CategoryType.EXPENSE))
+    mockMvc.perform(get("/api/categories/type/{type}", CategoryType.EXPENSE))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(2))
         .andExpect(jsonPath("$[0].name").value("Groceries"))
