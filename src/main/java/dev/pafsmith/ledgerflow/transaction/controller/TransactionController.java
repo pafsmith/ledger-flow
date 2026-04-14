@@ -81,31 +81,37 @@ public class TransactionController {
 
   @GetMapping("/account/{accountId}")
   @Operation(summary = "Get all transactions for an account")
-  public List<TransactionResponse> getTransactionsForAccount(@PathVariable UUID accountId) {
-    return transactionService.getTransactionsForAccount(accountId);
+  public List<TransactionResponse> getTransactionsForAccount(@AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable UUID accountId) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
+    return transactionService.getTransactionsForAccount(userId, accountId);
   }
 
   @GetMapping("/category/{categoryId}")
   @Operation(summary = "Get all transactions for a category")
-  public List<TransactionResponse> getTransactionsForCategory(@PathVariable UUID categoryId) {
-    return transactionService.getTransactionsForCategory(categoryId);
+  public List<TransactionResponse> getTransactionsForCategory(@AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable UUID categoryId) {
+
+    UUID userId = UUID.fromString(userDetails.getUsername());
+    return transactionService.getTransactionsForCategory(userId, categoryId);
   }
 
-  @GetMapping("/user/{userId}/type/{type}")
-
+  @GetMapping("/type/{type}")
   @Operation(summary = "Get all transactions by user and type")
   public List<TransactionResponse> getTransactionsForUserByType(
-      @PathVariable UUID userId,
+      @AuthenticationPrincipal UserDetails userDetails,
       @PathVariable TransactionType type) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
     return transactionService.getTransactionsForUserByType(userId, type);
   }
 
-  @GetMapping("/user/{userId}/date-range")
+  @GetMapping("/date-range")
   @Operation(summary = "Get all transactions by user within a date range")
   public List<TransactionResponse> getTransactionsForUserBetweenDates(
-      @PathVariable UUID userId,
+      @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+    UUID userId = UUID.fromString(userDetails.getUsername());
     return transactionService.getTransactionsForUserBetweenDates(userId, startDate, endDate);
   }
 

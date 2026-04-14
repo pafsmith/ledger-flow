@@ -208,14 +208,28 @@ public class TransactionService {
     return mapToResponse(transaction);
   }
 
-  public List<TransactionResponse> getTransactionsForAccount(UUID accountId) {
+  public List<TransactionResponse> getTransactionsForAccount(UUID userId, UUID accountId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    Account account = accountRepository.findById(accountId)
+        .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+    if (!account.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Account does not belong to user");
+    }
     return transactionRepository.findByAccountIdOrderByTransactionDateDesc(accountId)
         .stream()
         .map(this::mapToResponse)
         .toList();
   }
 
-  public List<TransactionResponse> getTransactionsForCategory(UUID categoryId) {
+  public List<TransactionResponse> getTransactionsForCategory(UUID userId, UUID categoryId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    Category category = categoryRepository.findById(categoryId)
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+    if (!category.getUser().getId().equals(user.getId())) {
+      throw new ForbiddenException("Category does not belong to user");
+    }
     return transactionRepository.findByCategoryIdOrderByTransactionDateDesc(categoryId)
         .stream()
         .map(this::mapToResponse)
