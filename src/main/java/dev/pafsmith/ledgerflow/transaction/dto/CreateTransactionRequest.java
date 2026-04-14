@@ -32,7 +32,7 @@ public class CreateTransactionRequest {
   @NotNull(message = "Transaction type is required")
   private TransactionType type;
 
-  @NotNull(message = "Transaction data is required")
+  @NotNull(message = "Transaction date is required")
   private LocalDate transactionDate;
 
   @Size(max = 255, message = "Merchant must be 255 characters or fewer")
