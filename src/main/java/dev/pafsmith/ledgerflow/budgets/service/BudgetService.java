@@ -86,7 +86,7 @@ public class BudgetService {
   public Budget getBudgetForUserCategoryAndMonth(UUID userId, UUID categoryId, Integer year, Integer month) {
     return budgetRepository
         .findByUserIdAndCategoryIdAndYearAndMonth(userId, categoryId, year, month)
-        .orElseThrow(() -> new RuntimeException("Budget not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Budget not found"));
   }
 
   public BudgetResponse createBudget(CreateBudgetRequest request, UUID userId) {
