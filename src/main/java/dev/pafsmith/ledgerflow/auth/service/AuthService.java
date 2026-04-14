@@ -62,10 +62,10 @@ public class AuthService {
     String email = request.getEmail().trim().toLowerCase();
 
     User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User deatils incorrect"));
 
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-      throw new BadRequestException("Invalid email or password");
+      throw new ResourceNotFoundException("User deatils incorrect");
     }
 
     String token = jwtService.generateToken(user);
